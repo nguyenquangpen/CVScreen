@@ -1,0 +1,53 @@
+services:
+  cv_db:
+    container_name: cv_db
+    image: postgres:13
+    environment:
+      POSTGRES_DB: cv_db
+      POSTGRES_USER: cv_user
+      POSTGRES_PASSWORD: cv_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - cv_network
+
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "web_fsm", "-d", "web_fsm", "-h", "fsm_db"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+
+  cv_web:
+    build:
+      context: ../..
+      dockerfile: docker/dev/dockerfile
+    container_name: cv_web
+    command: python manage.py runserver 0.0.0.0:8080
+    ports:
+      - "8080:8080"
+    environment:
+        - DJANGO_SETTINGS_MODULE=config.settings.local
+        - DB_NAME=web_fsm
+        - DB_USER=web_fsm
+        - DB_PASSWORD=password
+        - DB_HOST=fsm_db
+
+    # if local change, container auto update
+    # save code in local -> container
+    volumes:
+      - ../../:/app
+    
+    depends_on:
+      - cv_db
+    networks:
+      - cv_network
+
+volumes:
+  pgdata:
+  
+networks:
+  cv_network:
+    driver: bridge
