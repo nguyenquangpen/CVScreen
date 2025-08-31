@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>
+            Resume Screen -{% block title %} {% endblock %}
+        </title>
+
+        <link rel="stylesheet" href="../../static/vendor/bootstrap/dist/css/bootstrap.min.css">
+        <script src="../../static/vendor/@popperjs/core/dist/umd/popper.min.js"></script>
+        <link rel="stylesheet" href="../../static/css/vlot.css">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        
+        {% block stylesheets %}
+
+        {% endblock %}
+    </head>
+    <body>
+        {% include 'includes/sidebar.html' %}
+        <main class="container" style="min-height: 100vh; display: flex; flex-direction: column; background-color: #B5B7C0;">
+            <header class="mb-4">
+                {% include 'includes/header.html' %}
+            </header>
+
+            <div style="flex: 1">
+                {% block content %}
+                
+                {% endblock %}
+            </div>
+        </main>
+        {% block javascripts %}
+
+        {% endblock %}
+    </body>
+</html>
