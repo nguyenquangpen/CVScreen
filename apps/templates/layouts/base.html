@@ -19,16 +19,14 @@
     <body>
         {% include 'includes/sidebar.html' %}
         <main class="container">
-            <div class="mx-5">
-                <header class="mb-4">
-                    {% include 'includes/header.html' %}
-                </header>
+            <header class="mb-4 mx-5 px-md-4">
+                {% include 'includes/header.html' %}
+            </header>
 
-                <div style="flex: 1 ">
-                    {% block content %}
+            <div class="flex-grow-1 mx-5 px-md-4">
+                {% block content %}
 
-                    {% endblock %}
-                </div>
+                {% endblock %}
             </div>
         </main>
         {% block javascripts %}
