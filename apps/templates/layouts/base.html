@@ -18,15 +18,17 @@
     </head>
     <body>
         {% include 'includes/sidebar.html' %}
-        <main class="container" style="min-height: 100vh; display: flex; flex-direction: column; background-color: #B5B7C0;">
-            <header class="mb-4">
-                {% include 'includes/header.html' %}
-            </header>
+        <main class="container">
+            <div class="mx-5">
+                <header class="mb-4">
+                    {% include 'includes/header.html' %}
+                </header>
 
-            <div style="flex: 1">
-                {% block content %}
+                <div style="flex: 1 ">
+                    {% block content %}
 
-                {% endblock %}
+                    {% endblock %}
+                </div>
             </div>
         </main>
         {% block javascripts %}
