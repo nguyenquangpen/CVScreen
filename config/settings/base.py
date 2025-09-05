@@ -1,8 +1,9 @@
 import os
-import environ
 import time
 from datetime import timedelta
 from pathlib import Path
+
+import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -19,7 +20,7 @@ DJANGO_ADMIN = env("DJANGO_ADMIN")
 ACCEPT_RESUME_FILE_TYPE_UPLOAD = env("ACCEPT_RESUME_FILE_TYPE_UPLOAD")
 
 ALLOWED_HOSTS = ["*"]
-CORS_ORIGIN_ALLOW_ALL = True  
+CORS_ORIGIN_ALLOW_ALL = True
 CORS_ORIGIN_WHITELIST = ["*"]
 
 DATETIME_FORMAT = "Y/m/d H:i"
@@ -59,11 +60,13 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 if env.get_value("DATABASE_URL", default=None):
     DATABASES = {
-        "default": env.db(),  
+        "default": env.db(),
     }
 else:
     DATABASES = {
-        "default": env.db_url("SQLITE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+        "default": env.db_url(
+            "SQLITE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+        )
     }
 
 MEDIA_URL = "/media/"
@@ -99,7 +102,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "apps/static"),)
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -138,4 +143,3 @@ LOGGING = {
 }
 
 APP_START_TIME = str(int(time.time() * 1000))
-

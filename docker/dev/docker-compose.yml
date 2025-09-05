@@ -39,13 +39,13 @@ services:
       - ../../:/app
     depends_on:
       cv_db:
-        condition: service_healthy 
+        condition: service_healthy
     networks:
       - cv_network
 
 volumes:
   pgdata:
-  
+
 networks:
   cv_network:
     driver: bridge
