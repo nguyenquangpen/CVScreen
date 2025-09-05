@@ -3,9 +3,9 @@ services:
     container_name: cv_db
     image: postgres:13
     environment:
-      POSTGRES_DB: cv_db
-      POSTGRES_USER: cv_user
-      POSTGRES_PASSWORD: cv_password
+      POSTGRES_DB: cv_web
+      POSTGRES_USER: cv_web
+      POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     volumes:
@@ -14,7 +14,7 @@ services:
       - cv_network
 
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "web_fsm", "-d", "web_fsm", "-h", "fsm_db"]
+      test: ["CMD", "pg_isready", "-U", "cv_web", "-d", "cv_web", "-h", "cv_db"]
       interval: 10s
       retries: 5
       start_period: 10s
@@ -30,18 +30,16 @@ services:
       - "8080:8080"
     environment:
         - DJANGO_SETTINGS_MODULE=config.settings.local
-        - DB_NAME=web_fsm
-        - DB_USER=web_fsm
+        - DB_NAME=cv_web
+        - DB_USER=cv_web
         - DB_PASSWORD=password
-        - DB_HOST=fsm_db
+        - DB_HOST=cv_db
 
-    # if local change, container auto update
-    # save code in local -> container
     volumes:
       - ../../:/app
-    
     depends_on:
-      - cv_db
+      cv_db:
+        condition: service_healthy 
     networks:
       - cv_network
 

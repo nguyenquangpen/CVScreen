@@ -7,9 +7,9 @@
             Resume Screen -{% block title %} {% endblock %}
         </title>
 
-        <link rel="stylesheet" href="../../static/vendor/bootstrap/dist/css/bootstrap.min.css">
-        <script src="../../static/vendor/@popperjs/core/dist/umd/popper.min.js"></script>
-        <link rel="stylesheet" href="../../static/css/vlot.css">
+        <link rel="stylesheet" href="{{ ASSETS_ROOT }}/vendor/bootstrap/dist/css/bootstrap.min.css">
+        <script src="{{ ASSETS_ROOT }}/vendor/@popperjs/core/dist/umd/popper.min.js"></script>
+        <link rel="stylesheet" href="{{ ASSETS_ROOT }}/css/vlot.css">
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
         {% block stylesheets %}
@@ -30,7 +30,7 @@
             </div>
         </main>
         {% block javascripts %}
-
+        {% include 'includes/scripts.html' %}
         {% endblock %}
     </body>
 </html>

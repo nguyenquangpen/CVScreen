@@ -115,6 +115,18 @@ main.container{
   background-color: transparent;
 }
 
+.custom-pagination .page-item.active .page-link {
+  background-color: #5932EA;
+  color: #fff;
+  border-radius: 10px;
+  border: none;
+}
+
+.custom-pagination .page-link:focus,
+.custom-pagination .page-link:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
 
 @media (min-width: 768px) {
     .border-right-on-md {
