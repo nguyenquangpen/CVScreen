@@ -10,6 +10,6 @@ __pycache__/
 **.db
 .env
 # write model here
-models/ 
+models/
 
 db.sqlite3

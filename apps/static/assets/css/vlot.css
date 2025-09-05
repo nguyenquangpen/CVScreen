@@ -11,7 +11,7 @@ body {
     width: 250px;
     min-height: 100vh;
     color: #FFFFFF;
-    flex-shrink: 0; 
+    flex-shrink: 0;
 }
 
 .sideBar .nav-link {
@@ -19,7 +19,7 @@ body {
     align-items: center;
     padding: 11px 14px;
     border: 2px solid transparent;
-    border-radius: 10px; 
+    border-radius: 10px;
     transition: all 0.2s ease-in-out;
 }
 
@@ -42,8 +42,8 @@ main.container{
 
 .title_text {
     font-family: 'Poppins', sans-serif;
-    font-weight: 600; 
-    font-size: 25px; 
+    font-weight: 600;
+    font-size: 25px;
 }
 
 .normal_text {
@@ -77,7 +77,7 @@ main.container{
 }
 
 .sideBar .nav-link:hover {
-    background-color: #f0f0f0;  
+    background-color: #f0f0f0;
     border-radius: 8px;
 }
 
@@ -103,15 +103,15 @@ main.container{
 }
 
 .custom-pagination .page-link {
-  color: #000;            
-  border: none;         
-  font-size: 14px;         
-  padding: 4px 8px;      
-  background-color: transparent; 
+  color: #000;
+  border: none;
+  font-size: 14px;
+  padding: 4px 8px;
+  background-color: transparent;
 }
 
 .custom-pagination .page-link:hover {
-  color: #5932EA;         
+  color: #5932EA;
   background-color: transparent;
 }
 
@@ -130,7 +130,7 @@ main.container{
 
 @media (min-width: 768px) {
     .border-right-on-md {
-        border-right: 1px solid #e0e0e0; 
+        border-right: 1px solid #e0e0e0;
     }
 }
 
