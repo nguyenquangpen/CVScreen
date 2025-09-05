@@ -4,9 +4,9 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y libpq-dev gcc
-COPY . /apps
+COPY . /app
 
 RUN pip install -r requirements-dev.txt
-EXPOSE 8088
+EXPOSE 8080
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8088"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8080"]

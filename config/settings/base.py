@@ -1,17 +1,29 @@
 import os
+import environ
 import time
 from datetime import timedelta
 from pathlib import Path
 
-import environ
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = "django-insecure-#y&e&a%%34a$ml!8vn42yda59lb7u&3ydh-w7mw_2e)k#u&066"
+env = environ.Env(
+    DEBUG=(bool, False),
+    DJANGO_ADMIN=(bool, False),
+)
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
-DEBUG = True
+SECRET_KEY = env("DJANGO_SECRET_KEY")
+DEBUG = env("DJANGO_DEBUG")
+DJANGO_ADMIN = env("DJANGO_ADMIN")
 
-ALLOWED_HOSTS = []
+ACCEPT_RESUME_FILE_TYPE_UPLOAD = env("ACCEPT_RESUME_FILE_TYPE_UPLOAD")
+
+ALLOWED_HOSTS = ["*"]
+CORS_ORIGIN_ALLOW_ALL = True  
+CORS_ORIGIN_WHITELIST = ["*"]
+
+DATETIME_FORMAT = "Y/m/d H:i"
+ASSETS_ROOT = os.getenv("ASSETS_ROOT", "/static/assets")
 
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -22,7 +34,6 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
 ]
 
-# add your custom apps here
 THIRD_PARTY_APPS = []
 
 LOCAL_APPS = [
@@ -44,64 +55,19 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
-
 WSGI_APPLICATION = "config.wsgi.application"
 
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
-        },
-    },
-]
-
-ROOT_URLCONF = "config.urls"
-
-WSGI_APPLICATION = "config.wsgi.application"
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if env.get_value("DATABASE_URL", default=None):
+    DATABASES = {
+        "default": env.db(),  
     }
-}
+else:
+    DATABASES = {
+        "default": env.db_url("SQLITE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+    }
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-]
-
-LANGUAGE_CODE = "en-us"
-
-TIME_ZONE = "UTC"
-
-USE_I18N = True
-
-USE_TZ = True
-
-STATIC_URL = "static/"
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
+MEDIA_URL = "/media/"
 TEMPLATES_DIRS = os.path.join(BASE_DIR, "apps/templates")
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -113,6 +79,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "config.context_processors.cfg_assets_root",
             ],
             "loaders": [
                 (
@@ -127,12 +94,24 @@ TEMPLATES = [
     },
 ]
 
-
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
-# Extra places for collect-static to find static files.
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "apps/static"),)
+
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "Asia/Ho_Chi_Minh"
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGGING = {
     "version": 1,
@@ -157,3 +136,6 @@ LOGGING = {
         }
     },
 }
+
+APP_START_TIME = str(int(time.time() * 1000))
+

@@ -1,0 +1,51 @@
+services:
+  cv_db:
+    container_name: cv_db
+    image: postgres:13
+    environment:
+      POSTGRES_DB: cv_web
+      POSTGRES_USER: cv_web
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - cv_network
+
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "cv_web", "-d", "cv_web", "-h", "cv_db"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+
+  cv_web:
+    build:
+      context: ../..
+      dockerfile: docker/dev/dockerfile
+    container_name: cv_web
+    command: python manage.py runserver 0.0.0.0:8080
+    ports:
+      - "8080:8080"
+    environment:
+        - DJANGO_SETTINGS_MODULE=config.settings.local
+        - DB_NAME=cv_web
+        - DB_USER=cv_web
+        - DB_PASSWORD=password
+        - DB_HOST=cv_db
+
+    volumes:
+      - ../../:/app
+    depends_on:
+      cv_db:
+        condition: service_healthy 
+    networks:
+      - cv_network
+
+volumes:
+  pgdata:
+  
+networks:
+  cv_network:
+    driver: bridge
