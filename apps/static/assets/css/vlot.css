@@ -138,6 +138,17 @@ main.container{
   overflow-x: auto;
   -webkit-overflow-scrolling: touch; }
 
+.table-limited-height{
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.small_button{
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+  border-radius: 0.2rem;
+}
+
 @media (max-width: 575.98px) {
   .table-responsive-sm {
     overflow-x: auto;
