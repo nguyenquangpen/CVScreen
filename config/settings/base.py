@@ -41,6 +41,7 @@ LOCAL_APPS = [
     "apps.resume.apps.ResumeConfig",
     "apps.overview.apps.OverviewConfig",
     "apps.dashboard.apps.DashboardConfig",
+    "apps.detailed_profile.apps.DetailedProfileConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
