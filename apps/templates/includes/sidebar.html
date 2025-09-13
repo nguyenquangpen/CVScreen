@@ -8,28 +8,28 @@
     <!-- Navigation Links -->
     <ul class="nav flex-column mt-4 mb-auto">
         <li class="nav-item">
-            <a href="#" class="nav-link d-flex align-items-center normal_text active">
+            <a href="#" class="nav-link d-flex align-items-center normal_text" id="sidebar-dashboard">
                 <img src="../../static/assets/images/dashboardIcon.svg"
                 alt="Dashboard Icon" width="20" height="20" class="me-2">
                 Dashboard
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link d-flex align-items-center normal_text">
+            <a href="{% url 'overview' %}" class="nav-link d-flex align-items-center normal_text" id="sidebar-overview">
                 <img src="../../static/assets/images/overviewIcon.svg"
                 alt="Overview Icon" width="20" height="20" class="me-2">
                 Overview
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link d-flex align-items-center normal_text">
+            <a href="{% url 'resume_screen' %}" class="nav-link d-flex align-items-center normal_text" id="sidebar-resume">
                 <img src="../../static/assets/images/personResume.svg"
                 alt="Resume Icon" width="20" height="20" class="me-2">
                 Resume
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link d-flex align-items-center normal_text">
+            <a href="{% url 'detailed_profile' %}" class="nav-link d-flex align-items-center normal_text" id="sidebar-detailed-profile">
                 <img src="../../static/assets/images/detailProfile.svg"
                 alt="Detailed Profile Icon" width="20" height="20" class="me-2">
                 Detailed Profile
