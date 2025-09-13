@@ -1,0 +1,34 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block title %}
+  JD Editor
+{% endblock %}
+
+{% block stylesheets %}
+{% endblock %}
+
+{% block content %}
+  <div class="editor-wrap">
+    <!-- alert container -->
+    <div id="alert-container"></div>
+
+    <!-- textarea cho TinyMCE -->
+    <textarea id="jd-editor">{{ content|safe }}</textarea>
+    <div class="d-flex justify-content-end align-items-center mt-3">
+      <div>
+        <a href="{% url 'overview' %}" class="btn btn-outline-secondary me-2">← Quay lại</a>
+        <button id="btn-save" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  
+{% endblock %}
+
+{% block javascripts %}
+  <script src="https://cdn.tiny.cloud/1/{{ TINYMCE_KEY }}/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ ASSETS_ROOT }}/js/jd_editor.js"></script>
+{% endblock %}
+

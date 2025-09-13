@@ -34,9 +34,10 @@ services:
         - DB_USER=cv_web
         - DB_PASSWORD=password
         - DB_HOST=cv_db
-
+        - PYTHONUNBUFFERED=1
     volumes:
       - ../../:/app
+      - ../../media:/app/media
     depends_on:
       cv_db:
         condition: service_healthy
@@ -48,4 +49,4 @@ volumes:
 
 networks:
   cv_network:
-    driver: bridge
+    external: true
