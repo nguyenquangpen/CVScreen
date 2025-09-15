@@ -36,7 +36,9 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
 ]
 
-THIRD_PARTY_APPS = []
+THIRD_PARTY_APPS = [
+    "rest_framework"
+]
 
 LOCAL_APPS = [
     "apps.resume.apps.ResumeConfig",
@@ -60,9 +62,18 @@ MIDDLEWARE = [
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 
-if env.get_value("DATABASE_URL", default=None):
+db_host = env.str("DB_HOST", default=None) 
+
+if db_host:
     DATABASES = {
-        "default": env.db(),
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env.str("DB_NAME"),
+            "USER": env.str("DB_USER"),
+            "PASSWORD": env.str("DB_PASSWORD"),
+            "HOST": db_host,
+            "PORT": env.str("DB_PORT", default="5432"),
+        }
     }
 else:
     DATABASES = {
@@ -70,6 +81,7 @@ else:
             "SQLITE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
         )
     }
+
 
 MEDIA_URL = "/media/"
 TEMPLATES_DIRS = os.path.join(BASE_DIR, "apps/templates")
@@ -145,3 +157,12 @@ LOGGING = {
 }
 
 APP_START_TIME = str(int(time.time() * 1000))
+
+ALLOWED_MIMES = {
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+}
+
+MAX_BYTES = 30 * 1024 * 1024 # 30MB

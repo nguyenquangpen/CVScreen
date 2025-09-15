@@ -5,9 +5,9 @@ services:
     environment:
       POSTGRES_DB: cv_web
       POSTGRES_USER: cv_web
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: testuser
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -32,7 +32,7 @@ services:
         - DJANGO_SETTINGS_MODULE=config.settings.local
         - DB_NAME=cv_web
         - DB_USER=cv_web
-        - DB_PASSWORD=password
+        - DB_PASSWORD=testuser
         - DB_HOST=cv_db
         - PYTHONUNBUFFERED=1
     volumes:

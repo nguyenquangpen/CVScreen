@@ -1,65 +1,19 @@
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404
+from rest_framework import status, parsers, mixins, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+import mimetypes
+
 from django.shortcuts import render, redirect
-from apps.overview.models import ProcessedCv
-import logging
+from apps.overview.models import Resume, JobDescription
+from apps.overview.serializers import ResumeSerializer, JobDescriptionSerializer
 from django.conf import settings
 
-logger = logging.getLogger("default")
-
 def overview(request):
-    cv_records_for_display = []
-
-    if request.method == 'POST':
-        if 'cv_file' in request.FILES:
-            uploaded_file = request.FILES['cv_file']
-
-            try:
-                cv_instance = ProcessedCv(cv_file=uploaded_file, status="Uploaded")
-                cv_instance.save()
-
-                message.success(request, "File uploaded successfully.")
-                return redirect('overview')
-            except Exception as e:
-                logger.error(f"Error saving uploaded file: {e}")
-
-        else:
-            message.error(request, "No file selected for upload.")
-
-    try:
-        all_cvs = ProcessedCv.objects.all().order_by('-upload_time')
-        cv_records_for_display = [{
-            'id': cv.id,
-            'file_name': cv.filename,
-            'email': cv.email if cv.email else "None",
-            'upload_time': cv.upload_time,
-            'status': cv.status,
-            'file_url': cv.cv_file.url
-        } for cv in all_cvs]
-    except Exception as e:
-        logger.error(f"Error retrieving CV records: {e}")
-
-    context = {
-        'cv_records': cv_records_for_display
-    }
-    return render(request, 'pages/overview_screen.html', context)
-
-    # def view_cv_file(request, pk):
-    #     cv_record = get_object_or_404(ProcessedCv, pk=pk)
-    #     try:
-    #         file_path = cv_record.cv_file.path
-    #         if not os.path.exists(file_path):
-    #             message.error(request, "File does not exist.")
-    #             return redirect('overview')
-    #         return FileResponse(open(file_path, 'rb'), content_type='application/pdf')
-    #     except Http404 as e:
-    #         messages.error(request, str(e))
-    #         return redirect('overview')
-    #     except Exception as e:
-    #         logger.error(f"Error viewing CV file {cv_record.filename}: {e}", exc_info=True)
-    #         messages.error(request, f"Could not view file: {e}")
-    #         return redirect('overview')
-    
-    # def delete_cv_record(request, pk):
-    #     pass
+    return render(request, 'pages/overview_screen.html', {
+        'TINYMCE_KEY': settings.TINYMCE_KEY,
+    })
 
 def jd_editor(request):
     content = request.session.get("jd_content", "")
@@ -68,13 +22,63 @@ def jd_editor(request):
         'TINYMCE_KEY': settings.TINYMCE_KEY,
     })
 
-def jd_save(request):
-    if request.method != "POST":
-        return HttpResponseBadRequest("Invalid method")
 
-    content = request.POST.get("content", "")
-    # Lưu tạm vào session (LOCAL, mất khi hết session)
-    request.session["jd_content"] = content
+def _read_file_bytes(drf_file):
+    out = bytearray()
+    for chunk in drf_file.chunks():
+        out.extend(chunk)
+        if len(out) > settings.MAX_BYTES:
+            raise ValueError("File too large")
+    return bytes(out)
 
-    # Trả JSON để hiện alert AJAX hoặc redirect tuỳ bạn
-    return JsonResponse({"status": "success", "message": "Đã lưu nội dung Job Description (local session)."})
+class _baseUpLoadView(
+    mixins.CreateModelMixin,   # POST /articles/
+    mixins.ListModelMixin,     # GET /articles/
+    mixins.RetrieveModelMixin, # GET /articles/{id}/
+    mixins.DestroyModelMixin,  # DELETE /articles/{id}/
+    viewsets.GenericViewSet    # base
+):
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+
+    model_cls = None
+
+    def create(self, request, *args, **kwargs):
+        file_obj = request.FILES.get("file")
+        if not file_obj:
+            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        mime = file_obj.content_type or "application/octet-stream"
+        if mime not in settings.ALLOWED_MIMES:
+            return Response({"error": "Unsupported file type"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            data = _read_file_bytes(file_obj)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        row = self.model_cls.objects.create(
+            filename=file_obj.name,
+            mime_type=mime,
+            content=data
+        )
+
+        ser = self.get_serializer(row, context={"request": request})
+        return Response(ser.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'], url_path='download')
+    def download(self, request, pk=None):
+        obj = get_object_or_404(self.model_cls, pk=pk)
+        content_type = obj.mime_type or mimetypes.guess_type(obj.filename)[0] or "application/octet-stream"
+        response = HttpResponse(obj.content, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{obj.filename}"'
+        return response
+    
+class ResumeViewSet(_baseUpLoadView):
+    queryset = Resume.objects.all().order_by('-upload_time')
+    serializer_class = ResumeSerializer
+    model_cls = Resume
+
+class JobDescriptionViewSet(_baseUpLoadView):
+    queryset = JobDescription.objects.all().order_by('-upload_time')
+    serializer_class = JobDescriptionSerializer
+    model_cls = JobDescription

@@ -13,5 +13,9 @@ urlpatterns = [
 ]
 
 urlpatterns += [
-    path("admin/", admin.site.urls),
+    path("", include("config.api_router")),
 ]
+
+urlpatterns += [
+    path("admin/", admin.site.urls),
+] 
