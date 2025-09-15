@@ -83,10 +83,10 @@ $(function () {
     }).then(async r => {
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data.detail || data.error || `Upload failed (${r.status})`);
-      return data; 
+      return data;
     });
   }
-  
+
   function apiDelete(kind, id) {
     return fetch(`/api/${kind}/${id}/`, {
       method: 'DELETE',
@@ -207,10 +207,10 @@ $(function () {
     const r = await fetch(next, { credentials: 'same-origin' });
     if (!r.ok) throw new Error(`Fetch failed (${r.status})`);
     const data = await r.json();
-    if (Array.isArray(data)) { 
+    if (Array.isArray(data)) {
       out.push(...data);
       break;
-    } else { 
+    } else {
       out.push(...(data.results || []));
       next = data.next;
     }

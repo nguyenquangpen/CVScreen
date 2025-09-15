@@ -36,9 +36,7 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
 ]
 
-THIRD_PARTY_APPS = [
-    "rest_framework"
-]
+THIRD_PARTY_APPS = ["rest_framework"]
 
 LOCAL_APPS = [
     "apps.resume.apps.ResumeConfig",
@@ -62,7 +60,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 
-db_host = env.str("DB_HOST", default=None) 
+db_host = env.str("DB_HOST", default=None)
 
 if db_host:
     DATABASES = {
@@ -165,4 +163,4 @@ ALLOWED_MIMES = {
     "text/plain",
 }
 
-MAX_BYTES = 30 * 1024 * 1024 # 30MB
+MAX_BYTES = 30 * 1024 * 1024  # 30MB

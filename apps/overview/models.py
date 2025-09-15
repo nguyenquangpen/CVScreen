@@ -1,6 +1,9 @@
-from django.db import models
 import os
+
+from django.db import models
+
 # Create your models here.
+
 
 class Resume(models.Model):
     file_content = models.BinaryField()
@@ -12,6 +15,7 @@ class Resume(models.Model):
     def __str__(self):
         return self.filename
 
+
 class JobDescription(models.Model):
     file_content = models.BinaryField()
     filename = models.TextField()
@@ -21,4 +25,3 @@ class JobDescription(models.Model):
 
     def __str__(self):
         return self.filename
-
