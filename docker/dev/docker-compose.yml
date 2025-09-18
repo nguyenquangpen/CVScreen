@@ -35,6 +35,7 @@ services:
         - DB_PASSWORD=testuser
         - DB_HOST=cv_db
         - PYTHONUNBUFFERED=1
+        - AI_URL=http://cv_ai:8000
     volumes:
       - ../../:/app
       - ../../media:/app/media

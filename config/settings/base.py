@@ -16,7 +16,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env("DJANGO_DEBUG")
 DJANGO_ADMIN = env("DJANGO_ADMIN")
-# AI_URL = env("AI_URL")
+AI_URL = env.str("AI_URL", default="http://localhost:8000")
 ACCEPT_RESUME_FILE_TYPE_UPLOAD = env("ACCEPT_RESUME_FILE_TYPE_UPLOAD")
 TINYMCE_KEY = env("TINYMCE_API_KEY")
 
