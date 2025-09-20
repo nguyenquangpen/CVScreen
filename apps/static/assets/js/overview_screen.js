@@ -219,7 +219,7 @@ function bind(kind) {
   $(cfg.tbody).on('click', '.btn-delete', function () {
     const $row = $(this).closest('tr');
     const id = $row.data('id');
-    const itemFileName = $row.find('td.fw-medium').text(); 
+    const itemFileName = $row.find('td.fw-medium').text();
     Swal.fire({
       title: 'Xác nhận xóa',
       text: `Bạn có chắc chắn muốn xóa "${itemFileName}"? Hành động này không thể hoàn tác.`,
@@ -236,15 +236,15 @@ function bind(kind) {
             const i = cfg.store.findIndex(r => r.id === id);
             if (i >= 0) cfg.store.splice(i, 1);
             render(kind);
-            Swal.fire( 
+            Swal.fire(
               'Đã xóa!',
               `Mục "${itemFileName}" đã được xóa thành công.`,
               'success'
             );
           })
           .catch(err => {
-            showMsg('danger', `Delete error: ${err.message}`); 
-            Swal.fire( 
+            showMsg('danger', `Delete error: ${err.message}`);
+            Swal.fire(
               'Lỗi!',
               `Không thể xóa "${itemFileName}". Lỗi: ${err.message}`,
               'error'
