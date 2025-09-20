@@ -119,10 +119,10 @@ $(function () {
     });
   }
 
-  function apiSendToDjangoBackendForAI(resumeIds, jdIds) {
+  function sendDataToAI(resumeIds, jdId) {
     const payload = {
       resume_ids: resumeIds,
-      job_description_ids: jdIds
+      job_ids: jdId
     };
     const DJANGO_AI_PROCESS_ENDPOINT = '/api/process-with-ai/';
 
@@ -210,31 +210,55 @@ $(function () {
   }
 
   // ================== Bind cho từng loại (nút upload + delete delegation) ==================
-  function bind(kind) {
-    const cfg = KINDS[kind];
-    const hiddenInput = makeHiddenInput(kind);
+function bind(kind) {
+  const cfg = KINDS[kind];
+  const hiddenInput = makeHiddenInput(kind);
 
-    $(cfg.btn).on('click', () => hiddenInput.click());
+  $(cfg.btn).on('click', () => hiddenInput.click());
 
-    $(cfg.tbody).on('click', '.btn-delete', function () {
-      const $row = $(this).closest('tr');
-      const id = $row.data('id');
-      if (!confirm('Bạn có chắc chắn muốn xóa mục này?')) return;
-
-      apiDelete(kind, id)
-        .then(() => {
-          const i = cfg.store.findIndex(r => r.id === id);
-          if (i >= 0) cfg.store.splice(i, 1);
-          render(kind);
-          showMsg('success', `Deleted ${kind === 'resumes' ? 'resume' : 'JD'}.`);
-        })
-        .catch(err => showMsg('danger', `Delete error: ${err.message}`));
+  $(cfg.tbody).on('click', '.btn-delete', function () {
+    const $row = $(this).closest('tr');
+    const id = $row.data('id');
+    const itemFileName = $row.find('td.fw-medium').text(); 
+    Swal.fire({
+      title: 'Xác nhận xóa',
+      text: `Bạn có chắc chắn muốn xóa "${itemFileName}"? Hành động này không thể hoàn tác.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Có, xóa!',
+      cancelButtonText: 'Hủy'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        apiDelete(kind, id)
+          .then(() => {
+            const i = cfg.store.findIndex(r => r.id === id);
+            if (i >= 0) cfg.store.splice(i, 1);
+            render(kind);
+            Swal.fire( 
+              'Đã xóa!',
+              `Mục "${itemFileName}" đã được xóa thành công.`,
+              'success'
+            );
+          })
+          .catch(err => {
+            showMsg('danger', `Delete error: ${err.message}`); 
+            Swal.fire( 
+              'Lỗi!',
+              `Không thể xóa "${itemFileName}". Lỗi: ${err.message}`,
+              'error'
+            );
+          });
+      }
     });
+  });
 
-    $(cfg.tbody).on('change', '.row-checkbox', function () {
-      updateSelectAllCheckbox(kind);
-    });
-  }
+  $(cfg.tbody).on('change', '.row-checkbox', function () {
+    updateSelectAllCheckbox(kind);
+  });
+}
+
 
   // ================== Logic Checkbox "Select All" ==================
   function setupSelectAllCheckbox(tableBodyId) {
@@ -267,6 +291,9 @@ $(function () {
 
   // ================== Xử lý sự kiện nút "Bắt đầu" ==================
   $('#btn-start').on('click', function () {
+    const $startButton = $(this);
+    $startButton.prop('disabled', true);
+
     const selectedResumeIds = [];
     $('#resumeTableBody .row-checkbox:checked').each(function () {
       const rowId = $(this).closest('tr').data('id');
@@ -283,20 +310,24 @@ $(function () {
       }
     });
 
-    if (selectedResumeIds.length === 0 || selectedJdIds.length === 0) {
+    if (selectedResumeIds.length === 0 || selectedJdIds.length === 0 || selectedJdIds.length > 1) {
       showMsg('warning', 'Vui lòng chọn ít nhất một CV VÀ một JD để bắt đầu khớp.');
+      $startButton.prop('disabled', false);
       return;
     }
 
-    apiSendToDjangoBackendForAI(selectedResumeIds, selectedJdIds)
+    sendDataToAI(selectedResumeIds, selectedJdIds)
       .then(response => {
         showMsg('success', 'Yêu cầu xử lý AI đã được gửi thành công! Kết quả sẽ được hiển thị.');
         console.log('Django Backend Response (from AI Server):', response);
-        displayMatchingResults(response.matching_results);
+        alert('AI processing request sent successfully! Check console for response.');
       })
       .catch(error => {
         showMsg('danger', `Gửi yêu cầu xử lý AI thất bại: ${error.message}`);
         console.error('Error sending data to Django Backend for AI:', error);
+      })
+      .finally(() => {
+            $startButton.prop('disabled', false);
       });
   });
 

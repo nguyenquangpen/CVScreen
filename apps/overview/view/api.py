@@ -9,6 +9,8 @@ from rest_framework.response import Response
 from apps.overview.models import JobDescription, Resume
 from apps.overview.serializers import (JobDescriptionSerializer,
                                        ResumeSerializer)
+from rest_framework.views import APIView
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +87,49 @@ class JobDescriptionViewSet(_baseUpLoadView):
     model_cls = JobDescription
 
 
-def CalculateScore(resume):
-    # Implement your scoring logic here
-    return score
+class ProcessWithAI(APIView):
+    def post(self, request):
+        resume_ids = request.data.get("resume_ids")
+        job_ids = request.data.get("job_ids")
+
+        if not resume_ids or not job_ids:
+            return Response(
+                {"error": "resume_ids and job_ids are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        ai_payload = {
+            "resume_ids": resume_ids,
+            "job_ids": job_ids,
+        }
+
+        try:
+            ai_server_base_url = settings.AI_URL
+            ai_endpoint = f"{ai_server_base_url}/process-with-ai/"
+
+            response_from_ai = requests.post(
+                ai_endpoint,
+                json=ai_payload,
+            )
+            response_from_ai.raise_for_status()
+            ai_response_data = response_from_ai.json()
+            return Response(ai_response_data, status=status.HTTP_200_OK)
+
+        except requests.exceptions.Timeout:
+            logger.error(f"Timeout communicating with AI server at {ai_endpoint}")
+            return Response(
+                {"error": "AI service did not respond in time."},
+                status=status.HTTP_504_GATEWAY_TIMEOUT,
+            )
+        except requests.RequestException as e:
+            logger.error(f"Error communicating with AI server: {e}")
+            return Response(
+                {"error": f"Failed to communicate with AI server: {e}"},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        except Exception as e:
+            logger.exception("Unexpected error in ProcessWithAI Django view.")
+            return Response(
+                {"error": "An unexpected server error occurred."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
