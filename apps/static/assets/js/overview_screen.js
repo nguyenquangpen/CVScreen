@@ -1,4 +1,5 @@
 $(function () {
+  // ================== Config theo từng loại ==================
   const KINDS = {
     resumes: {
       btn: '#btn-upload-resume',
@@ -6,6 +7,7 @@ $(function () {
       accept: '.pdf,.doc,.docx,.txt',
       empty: '<tr><td colspan="6" class="text-center">Chưa có CV nào.</td></tr>',
       store: [],
+      endpoint: '/api/resumes/',
       rowHtml: (r, toLocalTime) => `
         <tr class="normal_text" data-kind="resumes" data-id="${r.id}">
           <td class="text-center">
@@ -18,7 +20,7 @@ $(function () {
           <td class="text-center">${toLocalTime(r.uploadTs)}</td>
           <td><span class="badge ${r.status === 'uploaded' ? 'bg-success' : 'bg-warning'}">${r.status || 'pending'}</span></td>
           <td class="text-center d-flex justify-content-center small_button">
-            <a href="${r.url}" target="_blank" class="btn btn-sm btn-outline-success me-1 small_button" style="background-color: #16c09879">View</a>
+            <button class="btn btn-sm btn-outline-success me-1 small_button" style="background-color: #16c09879">View</button>
             <button class="btn btn-sm btn-outline-danger small_button btn-delete" style="background-color: #FFC5C5">Delete</button>
           </td>
         </tr>
@@ -30,6 +32,7 @@ $(function () {
       accept: '.pdf,.doc,.docx,.txt',
       empty: '<tr><td colspan="5" class="text-center">Chưa có JD nào.</td></tr>',
       store: [],
+      endpoint: '/api/jobdescriptions/',
       rowHtml: (r, toLocalTime) => `
         <tr class="normal_text" data-kind="jobdescriptions" data-id="${r.id}">
           <td class="text-center">
@@ -41,7 +44,7 @@ $(function () {
           <td class="text-center">${toLocalTime(r.uploadTs)}</td>
           <td class="text-center">
             <div class="d-flex justify-content-center align-items-center small_button">
-              <a href="${r.url}" target="_blank" class="btn btn-sm btn-outline-success me-1 small_button" style="background-color: #16c09879">View</a>
+              <button class="btn btn-sm btn-outline-success me-1 small_button" style="background-color: #16c09879">View</button>
               <button class="btn btn-sm btn-outline-danger small_button btn-delete" style="background-color: #FFC5C5">Delete</button>
             </div>
           </td>
@@ -50,7 +53,9 @@ $(function () {
     }
   };
 
+  // ================== DOM & CSRF ==================
   const $msg = $('#messageContainer');
+
   function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -58,6 +63,7 @@ $(function () {
   }
   const csrftoken = getCookie('csrftoken');
 
+  // ================== Helpers chung ==================
   function showMsg(type, message) {
     const html = `
       <div class="alert alert-${type} alert-dismissible fade show" role="alert">
@@ -67,18 +73,22 @@ $(function () {
     $msg.append(html);
     setTimeout(() => $msg.find('.alert').first().alert('close'), 3000);
   }
+
   function toLocalTime(ts) {
     const d = new Date(ts);
     return isNaN(d) ? new Date().toLocaleString() : d.toLocaleString();
   }
 
+  // ================== API chung (Tool Server) ==================
   function apiUpload(kind, file) {
     const fd = new FormData();
     fd.append('file', file);
-    return fetch(`/api/${kind}/`, {
+    return fetch(`${KINDS[kind].endpoint}upload/`, {
       method: 'POST',
       body: fd,
-      headers: { 'X-CSRFToken': csrftoken },
+      headers: {
+        'X-CSRFToken': csrftoken
+      },
       credentials: 'same-origin'
     }).then(async r => {
       const data = await r.json().catch(() => ({}));
@@ -88,150 +98,266 @@ $(function () {
   }
 
   function apiDelete(kind, id) {
-    return fetch(`/api/${kind}/${id}/`, {
+    return fetch(`${KINDS[kind].endpoint}${id}/delete/`, {
       method: 'DELETE',
-      headers: { 'X-CSRFToken': csrftoken },
+      headers: {
+        'X-CSRFToken': csrftoken
+      },
       credentials: 'same-origin'
     }).then(r => {
       if (!r.ok) throw new Error(`Delete failed (${r.status})`);
     });
   }
 
-  function normalize(kind, data) {
-    const base = {
-      id: data.id,
-      fileName: data.filename,
-      url: data.download_url,
-      uploadTs: Date.parse(data.upload_time) || Date.now(),
-      status: 'uploaded'
-    };
-    return kind === 'resumes' ? { ...base, phone: null, email: null } : base;
+  function apiFetchList(kind) {
+    return fetch(KINDS[kind].endpoint, {
+      method: 'GET',
+      credentials: 'same-origin'
+    }).then(async r => {
+      if (!r.ok) throw new Error(`Failed to fetch ${kind} list (${r.status})`);
+      return r.json();
+    });
   }
 
+  function sendDataToAI(resumeIds, jdId) {
+    const payload = {
+      resume_ids: resumeIds,
+      job_ids: jdId
+    };
+    const DJANGO_AI_PROCESS_ENDPOINT = '/api/process-with-ai/';
+
+    return fetch(DJANGO_AI_PROCESS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken
+      },
+      body: JSON.stringify(payload),
+      credentials: 'same-origin'
+    }).then(async r => {
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        throw new Error(data.detail || data.error || `Failed to send data to Django backend for AI processing (${r.status})`);
+      }
+      return data;
+    });
+  }
+
+  function normalize(kind, data) {
+    const base = {
+      id: data.id.toString(),
+      fileName: data.filename,
+      uploadTs: Date.parse(data.upload_time) || Date.now(),
+      status: data.status || 'pending'
+    };
+    return kind === 'resumes' ? { ...base,
+      email: data.email || '',
+    } : base;
+  }
+
+  // ================== Render chung ==================
   function render(kind) {
     const cfg = KINDS[kind];
     const $tbody = $(cfg.tbody);
     const list = cfg.store;
+
     if (!list.length) {
       $tbody.html(cfg.empty);
       return;
     }
+
     const rows = list
       .slice()
       .sort((a, b) => (b.uploadTs || 0) - (a.uploadTs || 0))
       .map(item => cfg.rowHtml(item, toLocalTime))
       .join('');
+
     $tbody.html(rows);
+    updateSelectAllCheckbox(kind);
   }
 
+  // ================== Hidden input theo từng loại ==================
   function makeHiddenInput(kind) {
     const cfg = KINDS[kind];
-    const input = $('<input>', { type: 'file', multiple: true, accept: cfg.accept, style: 'display:none;' })
-      .appendTo(document.body);
+    const input = $('<input>', {
+      type: 'file',
+      multiple: true,
+      accept: cfg.accept,
+      style: 'display:none;'
+    }).appendTo(document.body);
 
     input.on('change', (e) => {
       const files = Array.from(e.target.files || []);
       if (!files.length) return showMsg('warning', 'No files selected.');
-      files.forEach(file => {
-        apiUpload(kind, file)
-          .then(data => {
-            cfg.store.push(normalize(kind, data));
-            render(kind);
-            showMsg('success', `Uploaded ${kind === 'resumes' ? 'resume' : 'JD'}: ${data.filename}`);
-          })
-          .catch(err => showMsg('danger', `Upload ${kind === 'resumes' ? 'resume' : 'JD'} error: ${err.message}`));
-      });
-      input.val('');
+
+      Promise.all(files.map(file => apiUpload(kind, file)))
+        .then(uploadedDataArray => {
+          uploadedDataArray.forEach(data => {
+            if (data) {
+              cfg.store.push(normalize(kind, data));
+              showMsg('success', `Uploaded ${kind === 'resumes' ? 'resume' : 'JD'}: ${data.filename}`);
+            }
+          });
+          render(kind);
+        })
+        .catch(err => showMsg('danger', `Batch upload ${kind === 'resumes' ? 'resume' : 'JD'} error: ${err.message}`))
+        .finally(() => {
+          input.val('');
+        });
     });
+
     return input;
   }
 
-  function bind(kind) {
-    const cfg = KINDS[kind];
-    const hiddenInput = makeHiddenInput(kind);
+  // ================== Bind cho từng loại (nút upload + delete delegation) ==================
+function bind(kind) {
+  const cfg = KINDS[kind];
+  const hiddenInput = makeHiddenInput(kind);
 
-    $(cfg.btn).on('click', () => hiddenInput.click());
+  $(cfg.btn).on('click', () => hiddenInput.click());
 
-    $(cfg.tbody).on('click', '.btn-delete', function () {
-      const $row = $(this).closest('tr');
-      const id = $row.data('id');
-      const name = $row.find('td.fw-medium').text().trim() || (kind === 'resumes' ? 'resume' : 'JD');
+  $(cfg.tbody).on('click', '.btn-delete', function () {
+    const $row = $(this).closest('tr');
+    const id = $row.data('id');
+    const itemFileName = $row.find('td.fw-medium').text(); 
+    Swal.fire({
+      title: 'Xác nhận xóa',
+      text: `Bạn có chắc chắn muốn xóa "${itemFileName}"? Hành động này không thể hoàn tác.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Có, xóa!',
+      cancelButtonText: 'Hủy'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        apiDelete(kind, id)
+          .then(() => {
+            const i = cfg.store.findIndex(r => r.id === id);
+            if (i >= 0) cfg.store.splice(i, 1);
+            render(kind);
+            Swal.fire( 
+              'Đã xóa!',
+              `Mục "${itemFileName}" đã được xóa thành công.`,
+              'success'
+            );
+          })
+          .catch(err => {
+            showMsg('danger', `Delete error: ${err.message}`); 
+            Swal.fire( 
+              'Lỗi!',
+              `Không thể xóa "${itemFileName}". Lỗi: ${err.message}`,
+              'error'
+            );
+          });
+      }
+    });
+  });
 
-      Swal.fire({
-        title: `Xóa ${name}?`,
-        text: "Hành động này không thể hoàn tác!",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
-        confirmButtonText: "Xóa",
-        cancelButtonText: "Hủy"
-      }).then((result) => {
-        if (result.isConfirmed) {
-          apiDelete(kind, id)
-            .then(() => {
-              const i = cfg.store.findIndex(r => r.id === id);
-              if (i >= 0) cfg.store.splice(i, 1);
-              render(kind);
-              Swal.fire("Đã xóa!", `${name} đã được xóa.`, "success");
-            })
-            .catch(err => Swal.fire("Lỗi!", `Không thể xóa: ${err.message}`, "error"));
-        }
-      });
+  $(cfg.tbody).on('change', '.row-checkbox', function () {
+    updateSelectAllCheckbox(kind);
+  });
+}
+
+
+  // ================== Logic Checkbox "Select All" ==================
+  function setupSelectAllCheckbox(tableBodyId) {
+    const $tableBody = $(tableBodyId);
+    const $selectAllCheckbox = $tableBody.closest('table').find('thead .select-all');
+
+    $selectAllCheckbox.on('change', function () {
+      const isChecked = $(this).prop('checked');
+      $tableBody.find('.row-checkbox').prop('checked', isChecked);
+    });
+
+    $tableBody.on('change', '.row-checkbox', function () {
+      updateSelectAllCheckbox(tableBodyId === '#jdTableBody' ? 'jobdescriptions' : 'resumes');
     });
   }
 
-  // ================== Khởi tạo ==================
-  bind('resumes');
-  bind('jobdescriptions');
-  render('resumes');
-  render('jobdescriptions');
+  function updateSelectAllCheckbox(kind) {
+    const cfg = KINDS[kind];
+    const $tbody = $(cfg.tbody);
+    const $selectAllCheckbox = $tbody.closest('table').find('thead .select-all');
+    const $rowCheckboxes = $tbody.find('.row-checkbox');
 
-  // ==== Load dataset từ server khi refresh ====
-  Promise.all([
-    fetch('/api/resumes/', { credentials: 'same-origin' }).then(r => r.json()),
-    fetch('/api/jobdescriptions/', { credentials: 'same-origin' }).then(r => r.json()),
-  ]).then(([resumes, jds]) => {
-    KINDS.resumes.store = (resumes || []).map(d => normalize('resumes', d));
-    KINDS.jobdescriptions.store = (jds || []).map(d => normalize('jobdescriptions', d));
-    render('resumes');
-    render('jobdescriptions');
-  }).catch(err => {
-    showMsg('danger', `Load dữ liệu lỗi: ${err.message || err}`);
-  });
-
-  async function fetchAllPages(url) {
-  const out = [];
-  let next = url;
-  while (next) {
-    const r = await fetch(next, { credentials: 'same-origin' });
-    if (!r.ok) throw new Error(`Fetch failed (${r.status})`);
-    const data = await r.json();
-    if (Array.isArray(data)) {
-      out.push(...data);
-      break;
+    if ($rowCheckboxes.length === 0) {
+      $selectAllCheckbox.prop('checked', false).prop('disabled', true);
     } else {
-      out.push(...(data.results || []));
-      next = data.next;
+      const allChecked = $rowCheckboxes.length > 0 && $rowCheckboxes.filter(':checked').length === $rowCheckboxes.length;
+      $selectAllCheckbox.prop('checked', allChecked).prop('disabled', false);
     }
   }
-  return out;
-}
 
-// ==== Load dataset từ server khi refresh (hỗ trợ phân trang) ====
-  (async () => {
-    try {
-      const [resumes, jds] = await Promise.all([
-        fetchAllPages('/api/resumes/'),
-        fetchAllPages('/api/jobdescriptions/'),
-      ]);
-      KINDS.resumes.store = resumes.map(d => normalize('resumes', d));
-      KINDS.jobdescriptions.store = jds.map(d => normalize('jobdescriptions', d));
-      render('resumes');
-      render('jobdescriptions');
-    } catch (err) {
-      showMsg('danger', `Load dữ liệu lỗi: ${err.message || err}`);
+  // ================== Xử lý sự kiện nút "Bắt đầu" ==================
+  $('#btn-start').on('click', function () {
+    const $startButton = $(this);
+    $startButton.prop('disabled', true);
+
+    const selectedResumeIds = [];
+    $('#resumeTableBody .row-checkbox:checked').each(function () {
+      const rowId = $(this).closest('tr').data('id');
+      if (rowId) {
+        selectedResumeIds.push(rowId.toString());
+      }
+    });
+
+    const selectedJdIds = [];
+    $('#jdTableBody .row-checkbox:checked').each(function () {
+      const rowId = $(this).closest('tr').data('id');
+      if (rowId) {
+        selectedJdIds.push(rowId.toString());
+      }
+    });
+
+    if (selectedResumeIds.length === 0 || selectedJdIds.length === 0 || selectedJdIds.length > 1) {
+      showMsg('warning', 'Vui lòng chọn ít nhất một CV VÀ một JD để bắt đầu khớp.');
+      $startButton.prop('disabled', false);
+      return;
     }
-  })();
 
+    sendDataToAI(selectedResumeIds, selectedJdIds)
+      .then(response => {
+        showMsg('success', 'Yêu cầu xử lý AI đã được gửi thành công! Kết quả sẽ được hiển thị.');
+        console.log('Django Backend Response (from AI Server):', response);
+        alert('AI processing request sent successfully! Check console for response.');
+      })
+      .catch(error => {
+        showMsg('danger', `Gửi yêu cầu xử lý AI thất bại: ${error.message}`);
+        console.error('Error sending data to Django Backend for AI:', error);
+      })
+      .finally(() => {
+            $startButton.prop('disabled', false);
+      });
+  });
+
+  // ================== Khởi tạo ==================
+  async function initializeData() {
+    try {
+      const resumesData = await apiFetchList('resumes');
+      KINDS.resumes.store = resumesData.map(d => normalize('resumes', d));
+      render('resumes');
+      showMsg('info', 'Resumes loaded from server.');
+    } catch (error) {
+      console.error("Error loading resumes:", error);
+      showMsg('danger', 'Failed to load resumes from server.');
+    }
+
+    try {
+      const jdsData = await apiFetchList('jobdescriptions');
+      KINDS.jobdescriptions.store = jdsData.map(d => normalize('jobdescriptions', d));
+      render('jobdescriptions');
+      showMsg('info', 'Job descriptions loaded from server.');
+    } catch (error) {
+      console.error("Error loading job descriptions:", error);
+      showMsg('danger', 'Failed to load job descriptions from server.');
+    }
+  }
+
+  // --- Chạy các hàm thiết lập ban đầu ---
+  bind('resumes');
+  bind('jobdescriptions');
+  setupSelectAllCheckbox('#jdTableBody');
+  setupSelectAllCheckbox('#resumeTableBody');
+  initializeData();
 });
