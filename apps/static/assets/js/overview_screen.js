@@ -255,10 +255,18 @@ function bind(kind) {
   });
 
   $(cfg.tbody).on('change', '.row-checkbox', function () {
-    updateSelectAllCheckbox(kind);
+    const $thisCheckbox = $(this);
+    const isChecked = $thisCheckbox.prop('checked');
+
+    if (kind === 'jobdescriptions') {
+      if (isChecked) {
+        $(`${cfg.tbody} .row-checkbox`).not($thisCheckbox).prop('checked', false);
+      }
+    } else {
+      updateSelectAllCheckbox(kind);
+    }
   });
 }
-
 
   // ================== Logic Checkbox "Select All" ==================
   function setupSelectAllCheckbox(tableBodyId) {
@@ -357,7 +365,6 @@ function bind(kind) {
   // --- Chạy các hàm thiết lập ban đầu ---
   bind('resumes');
   bind('jobdescriptions');
-  setupSelectAllCheckbox('#jdTableBody');
   setupSelectAllCheckbox('#resumeTableBody');
   initializeData();
 });
