@@ -10,7 +10,8 @@ from apps.overview.view.api import ProcessWithAI
 urlpatterns = [
     path("resume/", resume_screen, name="resume_screen"),
     path("overview/", overview, name="overview"),
-    path("editor_jd/", jd_editor, name="jd_editor"),
+    path("jd-editor/", jd_editor, name="jd_editor_new"),
+    path('jd-editor/<int:jd_id>/', jd_editor, name='jd_editor_edit'),
     path("detailed-profile/", detailed_profile_view, name="detailed_profile"),
 ]
 

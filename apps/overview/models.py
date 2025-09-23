@@ -9,7 +9,6 @@ class Resume(models.Model):
     file_content = models.BinaryField()
     filename = models.TextField()
     mime_type = models.TextField()
-    content = models.TextField(blank=True, default="")
     upload_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -17,10 +16,9 @@ class Resume(models.Model):
 
 
 class JobDescription(models.Model):
-    file_content = models.BinaryField()
-    filename = models.TextField()
-    mime_type = models.TextField()
-    content = models.TextField(blank=True, default="")
+    file_content = models.BinaryField(blank=True, null=True)
+    filename = models.CharField(max_length=255, blank=True, null=True, default="")
+    mime_type = models.CharField(max_length=100, blank=True, null=True, default="")
     upload_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

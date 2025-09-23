@@ -11,6 +11,10 @@ from apps.overview.serializers import (JobDescriptionSerializer,
                                        ResumeSerializer)
 from rest_framework.views import APIView
 import requests
+import io
+import docx
+from PyPDF2 import PdfReader
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +27,29 @@ def _read_file_bytes(drf_file):
             raise ValueError("File too large")
     return bytes(out)
 
+def _extract_text_from_bytes(file_bytes, mime_type):
+    if isinstance(file_bytes, memoryview):
+        file_bytes = bytes(file_bytes)
+
+    extracted_text = ""
+    try:
+        if "application/pdf" in mime_type and PdfReader:
+            reader = PdfReader(io.BytesIO(file_bytes))
+            for page in reader.pages:
+                extracted_text += page.extract_text() or ""
+        elif "application/vnd.openxmlformats-officedocument.wordprocessingml.document" in mime_type and docx:
+            document = docx.Document(io.BytesIO(file_bytes))
+            for paragraph in document.paragraphs:
+                extracted_text += paragraph.text + "\n"
+        elif "text/plain" in mime_type:
+            extracted_text = file_bytes.decode('utf-8', errors='ignore')
+        else:
+            logger.info(f"No specific text extractor for mime type: {mime_type}. Content will be empty.")
+        
+    except Exception as e:
+        logger.error(f"Error extracting text from {mime_type}: {e}", exc_info=True)
+        extracted_text = ""
+    return extracted_text
 
 class _baseUpLoadView(
     mixins.ListModelMixin,
@@ -30,7 +57,7 @@ class _baseUpLoadView(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+    parser_classes = [parsers.JSONParser, parsers.MultiPartParser, parsers.FormParser]
     model_cls = None
 
     @action(detail=False, methods=["post"], url_path="upload")
@@ -62,7 +89,6 @@ class _baseUpLoadView(
             filename=file_obj.name,
             mime_type=mime,
             file_content=raw_file_data,
-            content="",
         )
 
         logger.info(f"Uploaded file: {file_obj.name}, size: {len(raw_file_data)} bytes")
@@ -81,11 +107,65 @@ class ResumeViewSet(_baseUpLoadView):
     model_cls = Resume
 
 
-class JobDescriptionViewSet(_baseUpLoadView):
+class JobDescriptionViewSet(_baseUpLoadView, mixins.UpdateModelMixin, mixins.CreateModelMixin):
     queryset = JobDescription.objects.all().order_by("-upload_time")
     serializer_class = JobDescriptionSerializer
     model_cls = JobDescription
 
+    def create(self, request, *args, **kwargs):
+        logger.debug(f"[JobDescriptionViewSet-create] Initial request data: {request.data}")
+        mutable_data = request.data.copy()
+
+        if 'content' in mutable_data and mutable_data['content'] is not None:
+            if not mutable_data.get('mime_type'):
+                mutable_data['mime_type'] = 'text/plain'
+                logger.debug(f"[JobDescriptionViewSet-create] Assigned default mime_type: {mutable_data['mime_type']}")
+            if not mutable_data.get('filename'):
+                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                mutable_data['filename'] = f"New_JD_from_Editor_{timestamp}.txt"
+                logger.debug(f"[JobDescriptionViewSet-create] Assigned default filename: {mutable_data['filename']}")
+        else:
+            logger.debug(f"[JobDescriptionViewSet-create] 'content' not found or is None. Not applying default filename/mime_type logic.")
+
+        logger.debug(f"[JobDescriptionViewSet-create] Data sent to serializer: {mutable_data}")
+        serializer = self.get_serializer(data=mutable_data)
+        
+        if not serializer.is_valid():
+            logger.error("[JobDescriptionViewSet-create] Serializer validation failed: %s", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        instance = serializer.save() 
+        instance.refresh_from_db() 
+
+        logger.debug(f"[JobDescriptionViewSet-create] Saved JobDescription instance ID: {instance.id}")
+        logger.debug(f"[JobDescriptionViewSet-create] Saved instance file_content type: {type(instance.file_content)}")
+        
+        if instance.file_content:
+            file_content_as_bytes = bytes(instance.file_content)
+            logger.debug(f"[JobDescriptionViewSet-create] Saved instance file_content (first 100 bytes): {file_content_as_bytes[:100]}")
+            try:
+                logger.debug(f"[JobDescriptionViewSet-create] Saved instance file_content (decoded preview): {file_content_as_bytes.decode('utf-8', errors='ignore')[:100]}")
+            except Exception as e:
+                logger.debug(f"[JobDescriptionViewSet-create] Could not decode file_content for preview: {e}")
+        else:
+            logger.debug(f"[JobDescriptionViewSet-create] Saved instance file_content is empty or None.")
+
+        logger.info(f"[JobDescriptionViewSet-create] JobDescription created successfully. Filename: {instance.filename}, Mime_type: {instance.mime_type}")
+        
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
 class ProcessWithAI(APIView):
     def post(self, request):

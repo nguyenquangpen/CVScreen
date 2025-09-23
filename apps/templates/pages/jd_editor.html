@@ -13,6 +13,8 @@
     <!-- alert container -->
     <div id="alert-container"></div>
 
+    <input type="hidden" id="editing-jd-id" value="{{ jd_id|default:'' }}">
+    
     <!-- textarea cho TinyMCE -->
     <textarea id="jd-editor">{{ content|safe }}</textarea>
     <div class="d-flex justify-content-end align-items-center mt-3">
@@ -21,9 +23,6 @@
         <button id="btn-save" class="btn btn-primary">Save</button>
       </div>
     </div>
-  </div>
-
-  
 {% endblock %}
 
 {% block javascripts %}

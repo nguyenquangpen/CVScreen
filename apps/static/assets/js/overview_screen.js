@@ -98,6 +98,7 @@ $(function () {
   }
 
   function apiDelete(kind, id) {
+    
     return fetch(`${KINDS[kind].endpoint}${id}/delete/`, {
       method: 'DELETE',
       headers: {
@@ -106,6 +107,7 @@ $(function () {
       credentials: 'same-origin'
     }).then(r => {
       if (!r.ok) throw new Error(`Delete failed (${r.status})`);
+      else window.location.reload();
     });
   }
 
@@ -338,6 +340,26 @@ function bind(kind) {
             $startButton.prop('disabled', false);
       });
   });
+
+  // ================== Xử lý sự kiện nút "Edit Job Description" ==================
+  $('#btn-edit-jd').on('click', function () {
+    const selectedJdIds = [];
+    $('#jdTableBody .row-checkbox:checked').each(function () {
+      const rowId = $(this).closest('tr').data('id');
+      if (rowId) {
+        selectedJdIds.push(rowId.toString());
+      }
+    });
+    if (selectedJdIds.length === 1) {
+      const jdId = selectedJdIds[0];
+      window.location.href = `/jd-editor/${jdId}/`;
+    } else if (selectedJdIds.length === 0) {
+      window.location.href = `/jd-editor/`;
+    }
+    else{
+      showMsg('warning', 'please select only one Job Description to edit.');
+    }
+   });
 
   // ================== Khởi tạo ==================
   async function initializeData() {
