@@ -2,15 +2,15 @@ from django.contrib import admin
 from django.urls import include, path
 
 from apps.detailed_profile.view.web import detailed_profile_view
-from apps.overview.view.web import jd_editor, overview, match_results_view
+from apps.overview.view.api import ProcessWithAI
+from apps.overview.view.web import jd_editor, match_results_view, overview
 from apps.resume.view.web import resume_screen
 
-from apps.overview.view.api import ProcessWithAI
 urlpatterns = [
     path("resume/", resume_screen, name="resume_screen"),
     path("overview/", overview, name="overview"),
     path("jd-editor/", jd_editor, name="jd_editor_new"),
-    path('jd-editor/<int:jd_id>/', jd_editor, name='jd_editor_edit'),
+    path("jd-editor/<int:jd_id>/", jd_editor, name="jd_editor_edit"),
     path("detailed-profile/", detailed_profile_view, name="detailed_profile"),
 ]
 

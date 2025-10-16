@@ -327,7 +327,7 @@ function bind(kind) {
       return;
     }
 
-    const singleJdId = selectedJdIds[0]; 
+    const singleJdId = selectedJdIds[0];
 
     sendDataToAI(selectedResumeIds, singleJdId)
       .then(response => {
