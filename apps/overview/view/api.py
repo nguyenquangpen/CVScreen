@@ -1,215 +1,153 @@
-import logging
+# apps/overview/view/api.py
 
-from django.conf import settings
-from rest_framework import mixins, parsers, status, viewsets
-from rest_framework.decorators import action, api_view, parser_classes
-from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.response import Response
-
-from apps.overview.models import JobDescription, Resume
-from apps.overview.serializers import (JobDescriptionSerializer,
-                                       ResumeSerializer)
-from rest_framework.views import APIView
 import requests
-import io
-import docx
-from PyPDF2 import PdfReader
-from datetime import datetime
+from django.conf import settings
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.db import transaction
+from apps.overview.models import MatchSession, MatchResult
+import json
 
-logger = logging.getLogger(__name__)
+from django.urls import reverse
+
+# QUAN TRỌNG: Import các model của bạn
+from ..models import MatchSession, MatchResult
+
+SERVER_BASE_URL = settings.AI_URL
 
 
-def _read_file_bytes(drf_file):
-    out = bytearray()
-    for chunk in drf_file.chunks():
-        out.extend(chunk)
-        if len(out) > settings.MAX_BYTES:
-            raise ValueError("File too large")
-    return bytes(out)
-
-def _extract_text_from_bytes(file_bytes, mime_type):
-    if isinstance(file_bytes, memoryview):
-        file_bytes = bytes(file_bytes)
-
-    extracted_text = ""
+def _proxy_request_to_main_server(endpoint, request_method, request_data=None, request_files=None):
+    url = f"{SERVER_BASE_URL}{endpoint}"
+    headers = {}
+    
     try:
-        if "application/pdf" in mime_type and PdfReader:
-            reader = PdfReader(io.BytesIO(file_bytes))
-            for page in reader.pages:
-                extracted_text += page.extract_text() or ""
-        elif "application/vnd.openxmlformats-officedocument.wordprocessingml.document" in mime_type and docx:
-            document = docx.Document(io.BytesIO(file_bytes))
-            for paragraph in document.paragraphs:
-                extracted_text += paragraph.text + "\n"
-        elif "text/plain" in mime_type:
-            extracted_text = file_bytes.decode('utf-8', errors='ignore')
-        else:
-            logger.info(f"No specific text extractor for mime type: {mime_type}. Content will be empty.")
+        if request_data:
+            headers['Content-Type'] = 'application/json'
         
-    except Exception as e:
-        logger.error(f"Error extracting text from {mime_type}: {e}", exc_info=True)
-        extracted_text = ""
-    return extracted_text
-
-class _baseUpLoadView(
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
-    parser_classes = [parsers.JSONParser, parsers.MultiPartParser, parsers.FormParser]
-    model_cls = None
-
-    @action(detail=False, methods=["post"], url_path="upload")
-    def upload_file(self, request):
-        file_obj = request.FILES.get("file")
-        if not file_obj:
-            return Response(
-                {"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        mime = file_obj.content_type or "application/octet-stream"
-        if mime not in settings.ALLOWED_MIMES:
-            return Response(
-                {"error": "Unsupported file type"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            raw_file_data = _read_file_bytes(file_obj)
-
-        except ValueError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response(
-                {"error": f"Error during text extraction/preprocessing: {e}"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        row = self.model_cls.objects.create(
-            filename=file_obj.name,
-            mime_type=mime,
-            file_content=raw_file_data,
+        response = requests.request(
+            method=request_method,
+            url=url,
+            json=request_data,
+            files=request_files,
+            headers=headers,
+            timeout=30
         )
-
-        logger.info(f"Uploaded file: {file_obj.name}, size: {len(raw_file_data)} bytes")
-
-        ser = self.get_serializer(row, context={"request": request})
-        return Response(ser.data, status=status.HTTP_201_CREATED)
-
-    @action(detail=True, methods=["delete"], url_path="delete")
-    def delete_item(self, request, pk=None):
-        return self.destroy(request, pk=pk)
-
-
-class ResumeViewSet(_baseUpLoadView):
-    queryset = Resume.objects.all().order_by("-upload_time")
-    serializer_class = ResumeSerializer
-    model_cls = Resume
-
-
-class JobDescriptionViewSet(_baseUpLoadView, mixins.UpdateModelMixin, mixins.CreateModelMixin):
-    queryset = JobDescription.objects.all().order_by("-upload_time")
-    serializer_class = JobDescriptionSerializer
-    model_cls = JobDescription
-
-    def create(self, request, *args, **kwargs):
-        logger.debug(f"[JobDescriptionViewSet-create] Initial request data: {request.data}")
-        mutable_data = request.data.copy()
-
-        if 'content' in mutable_data and mutable_data['content'] is not None:
-            if not mutable_data.get('mime_type'):
-                mutable_data['mime_type'] = 'text/plain'
-                logger.debug(f"[JobDescriptionViewSet-create] Assigned default mime_type: {mutable_data['mime_type']}")
-            if not mutable_data.get('filename'):
-                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                mutable_data['filename'] = f"New_JD_from_Editor_{timestamp}.txt"
-                logger.debug(f"[JobDescriptionViewSet-create] Assigned default filename: {mutable_data['filename']}")
-        else:
-            logger.debug(f"[JobDescriptionViewSet-create] 'content' not found or is None. Not applying default filename/mime_type logic.")
-
-        logger.debug(f"[JobDescriptionViewSet-create] Data sent to serializer: {mutable_data}")
-        serializer = self.get_serializer(data=mutable_data)
+        response.raise_for_status()
         
-        if not serializer.is_valid():
-            logger.error("[JobDescriptionViewSet-create] Serializer validation failed: %s", serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            return Response(response.json(), status=response.status_code)
+        except ValueError:
+            return Response(response.text, status=response.status_code)
+            
+    except requests.exceptions.RequestException as e:
+        return Response({"error": f"Lỗi giao tiếp với server chính: {e}"}, status=status.HTTP_502_BAD_GATEWAY)
+
+
+# ================== ViewSet cho Resume ==================
+class ResumeViewSet(viewsets.ViewSet):
+    parser_classes = [MultiPartParser, FormParser] 
+
+    #GET /api/resumes/
+    def list(self, request):
+        return _proxy_request_to_main_server('/api/resumes/', 'GET')
+
+    #POST /api/resumes/upload/
+    @action(detail=False, methods=['post'], url_path='upload')
+    def upload_resume(self, request):
+        if 'file' not in request.FILES:
+            return Response({"error": "Không tìm thấy file."}, status=status.HTTP_400_BAD_REQUEST)
+
+        uploaded_file = request.FILES['file']
+        files_tuple = (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)
+        files = {'file': files_tuple}
+
+        return _proxy_request_to_main_server('/api/resumes/upload/', 'POST', request_files=files)
+
+    #DELETE /api/resumes/<pk>/delete/
+    @action(detail=True, methods=['delete'], url_path='delete')
+    def delete_resume(self, request, pk=None):
+        return _proxy_request_to_main_server(f'/api/resumes/{pk}/delete/', 'DELETE')
+
+
+# ================== ViewSet cho Job Description ==================
+class JobDescriptionViewSet(viewsets.ViewSet):
+    parser_classes = [MultiPartParser, FormParser]
+
+    #GET /api/jobdescriptions/
+    def list(self, request):
+        return _proxy_request_to_main_server('/api/jobdescriptions/', 'GET')
+
+    # /api/jobdescriptions/upload/
+    @action(detail=False, methods=['post'], url_path='upload')
+    def upload_jd(self, request):
+        if 'file' not in request.FILES:
+            return Response({"error": "Không tìm thấy file."}, status=status.HTTP_400_BAD_REQUEST)
         
-        instance = serializer.save() 
-        instance.refresh_from_db() 
+        uploaded_file = request.FILES['file']
+        files_tuple = (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)
+        files = {'file': files_tuple}
 
-        logger.debug(f"[JobDescriptionViewSet-create] Saved JobDescription instance ID: {instance.id}")
-        logger.debug(f"[JobDescriptionViewSet-create] Saved instance file_content type: {type(instance.file_content)}")
-        
-        if instance.file_content:
-            file_content_as_bytes = bytes(instance.file_content)
-            logger.debug(f"[JobDescriptionViewSet-create] Saved instance file_content (first 100 bytes): {file_content_as_bytes[:100]}")
-            try:
-                logger.debug(f"[JobDescriptionViewSet-create] Saved instance file_content (decoded preview): {file_content_as_bytes.decode('utf-8', errors='ignore')[:100]}")
-            except Exception as e:
-                logger.debug(f"[JobDescriptionViewSet-create] Could not decode file_content for preview: {e}")
-        else:
-            logger.debug(f"[JobDescriptionViewSet-create] Saved instance file_content is empty or None.")
+        return _proxy_request_to_main_server('/api/jobdescriptions/upload/', 'POST', request_files=files)
 
-        logger.info(f"[JobDescriptionViewSet-create] JobDescription created successfully. Filename: {instance.filename}, Mime_type: {instance.mime_type}")
-        
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        if getattr(instance, '_prefetched_objects_cache', None):
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
+    # api/jobdescriptions/<pk>/delete/
+    @action(detail=True, methods=['delete'], url_path='delete')
+    def delete_jd(self, request, pk=None):
+        return _proxy_request_to_main_server(f'/api/jobdescriptions/{pk}/delete/', 'DELETE')
 
 class ProcessWithAI(APIView):
     def post(self, request):
-        resume_ids = request.data.get("resume_ids")
-        job_ids = request.data.get("job_ids")
-
-        if not resume_ids or not job_ids:
-            return Response(
-                {"error": "resume_ids and job_ids are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        ai_payload = {
-            "resume_ids": resume_ids,
-            "job_ids": job_ids,
-        }
+        request_data = request.data
+        match_results = []
 
         try:
-            ai_server_base_url = settings.AI_URL
-            ai_endpoint = f"{ai_server_base_url}/process-with-ai/"
+            url = f"{SERVER_BASE_URL}/api/process-with-ai/"
 
-            response_from_ai = requests.post(
-                ai_endpoint,
-                json=ai_payload,
-            )
-            response_from_ai.raise_for_status()
-            ai_response_data = response_from_ai.json()
-            return Response(ai_response_data, status=status.HTTP_200_OK)
+            response = requests.post(url, json=request_data, timeout=120)
+
+            raw_results = response.json()
+
+            match_results = raw_results.get('results', [])
 
         except requests.exceptions.Timeout:
-            logger.error(f"Timeout communicating with AI server at {ai_endpoint}")
-            return Response(
-                {"error": "AI service did not respond in time."},
-                status=status.HTTP_504_GATEWAY_TIMEOUT,
-            )
-        except requests.RequestException as e:
-            logger.error(f"Error communicating with AI server: {e}")
-            return Response(
-                {"error": f"Failed to communicate with AI server: {e}"},
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
+            return Response({"error": "Yêu cầu đến server AI bị timeout."}, status=status.HTTP_504_GATEWAY_TIMEOUT)
+        except requests.exceptions.RequestException as e:
+            return Response({"error": f"Lỗi giao tiếp với server AI: {e}"}, status=status.HTTP_502_BAD_GATEWAY)
+        except ValueError: 
+             return Response({"error": "Server AI trả về dữ liệu không hợp lệ."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            jd_id = request_data.get('job_description_id')
+
+            if not jd_id:
+                return Response({"error": f"'{jd_id}' - {request_data} is missing from the request body."}, status=status.HTTP_400_BAD_REQUEST)
+
+            with transaction.atomic():
+                session = MatchSession.objects.create(
+                    job_description_id=jd_id,
+                    job_description_filename=f"Job Description ID {jd_id}"
+                )
+
+                for result_item in match_results:
+                    MatchResult.objects.create(
+                        session=session,
+                        resume_id=result_item.get('resume_id'),
+                        job_id=jd_id,
+                        resume_filename=result_item.get('filename'),
+                        match_score=result_item.get('match_score'),
+                        candidate_info=result_item.get('candidate_info', {}),
+                        candidate_skills=result_item.get('candidate_skills', [])
+                    )
+            
+            redirect_url = reverse('resume_screen')
+
+            return Response({
+                "status": "success",
+                'message': 'Xử lý thành công. Đang chuyển hướng...',
+                'redirect_url': redirect_url
+            }, status=status.HTTP_200_OK)
+        
         except Exception as e:
-            logger.exception("Unexpected error in ProcessWithAI Django view.")
-            return Response(
-                {"error": "An unexpected server error occurred."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return Response({"error": f"Lỗi hệ thống khi lưu dữ liệu: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

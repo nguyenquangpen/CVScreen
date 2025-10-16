@@ -4,10 +4,10 @@ $(function () {
     resumes: {
       btn: '#btn-upload-resume',
       tbody: '#resumeTableBody',
-      accept: '.pdf,.doc,.docx,.txt',
+      accept: '.pdf,.doc,.docx,.txt, .csv',
       empty: '<tr><td colspan="6" class="text-center">Chưa có CV nào.</td></tr>',
       store: [],
-      endpoint: '/api/resumes/',
+      endpoint: '/api/resumes',
       rowHtml: (r, toLocalTime) => `
         <tr class="normal_text" data-kind="resumes" data-id="${r.id}">
           <td class="text-center">
@@ -29,10 +29,10 @@ $(function () {
     jobdescriptions: {
       btn: '#btn-upload-job',
       tbody: '#jdTableBody',
-      accept: '.pdf,.doc,.docx,.txt',
+      accept: '.pdf,.doc,.docx,.txt, .csv',
       empty: '<tr><td colspan="5" class="text-center">Chưa có JD nào.</td></tr>',
       store: [],
-      endpoint: '/api/jobdescriptions/',
+      endpoint: '/api/jobdescriptions',
       rowHtml: (r, toLocalTime) => `
         <tr class="normal_text" data-kind="jobdescriptions" data-id="${r.id}">
           <td class="text-center">
@@ -79,11 +79,12 @@ $(function () {
     return isNaN(d) ? new Date().toLocaleString() : d.toLocaleString();
   }
 
-  // ================== API chung (Tool Server) ==================
+  // ================== API (Tool Server) ==================
   function apiUpload(kind, file) {
     const fd = new FormData();
     fd.append('file', file);
-    return fetch(`${KINDS[kind].endpoint}upload/`, {
+
+    return fetch(`${KINDS[kind].endpoint}/upload/`, {
       method: 'POST',
       body: fd,
       headers: {
@@ -98,8 +99,7 @@ $(function () {
   }
 
   function apiDelete(kind, id) {
-    
-    return fetch(`${KINDS[kind].endpoint}${id}/delete/`, {
+    return fetch(`${KINDS[kind].endpoint}/${id}/delete/`, {
       method: 'DELETE',
       headers: {
         'X-CSRFToken': csrftoken
@@ -121,10 +121,11 @@ $(function () {
     });
   }
 
+  /// send id to data
   function sendDataToAI(resumeIds, jdId) {
     const payload = {
       resume_ids: resumeIds,
-      job_ids: jdId
+      job_description_id: jdId
     };
     const DJANGO_AI_PROCESS_ENDPOINT = '/api/process-with-ai/';
 
@@ -147,7 +148,7 @@ $(function () {
 
   function normalize(kind, data) {
     const base = {
-      id: data.id.toString(),
+      id: (data.id != null) ? data.id.toString() : '',
       fileName: data.filename,
       uploadTs: Date.parse(data.upload_time) || Date.now(),
       status: data.status || 'pending'
@@ -308,7 +309,7 @@ function bind(kind) {
     $('#resumeTableBody .row-checkbox:checked').each(function () {
       const rowId = $(this).closest('tr').data('id');
       if (rowId) {
-        selectedResumeIds.push(rowId.toString());
+        selectedResumeIds.push(parseInt(rowId, 10));
       }
     });
 
@@ -316,7 +317,7 @@ function bind(kind) {
     $('#jdTableBody .row-checkbox:checked').each(function () {
       const rowId = $(this).closest('tr').data('id');
       if (rowId) {
-        selectedJdIds.push(rowId.toString());
+        selectedJdIds.push(parseInt(rowId, 10));
       }
     });
 
@@ -326,11 +327,17 @@ function bind(kind) {
       return;
     }
 
-    sendDataToAI(selectedResumeIds, selectedJdIds)
+    const singleJdId = selectedJdIds[0]; 
+
+    sendDataToAI(selectedResumeIds, singleJdId)
       .then(response => {
-        showMsg('success', 'Yêu cầu xử lý AI đã được gửi thành công! Kết quả sẽ được hiển thị.');
         console.log('Django Backend Response (from AI Server):', response);
-        alert('AI processing request sent successfully! Check console for response.');
+
+        if (response && response.redirect_url) {
+          setTimeout(() => {
+            window.location.href = response.redirect_url
+          }, 1500);
+        }
       })
       .catch(error => {
         showMsg('danger', `Gửi yêu cầu xử lý AI thất bại: ${error.message}`);

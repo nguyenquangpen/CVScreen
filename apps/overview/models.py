@@ -1,25 +1,26 @@
-import os
+# File: apps/overview/models.py
 
 from django.db import models
 
-# Create your models here.
+class MatchSession(models.Model):
+    job_description_id = models.IntegerField(help_text="ID của JD từ AI server")
+    job_description_filename = models.CharField(max_length=255, help_text="Tên file của JD")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Thời gian thực hiện")
 
-
-class Resume(models.Model):
-    file_content = models.BinaryField()
-    filename = models.TextField()
-    mime_type = models.TextField()
-    upload_time = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.filename
-
-
-class JobDescription(models.Model):
-    file_content = models.BinaryField(blank=True, null=True)
-    filename = models.CharField(max_length=255, blank=True, null=True, default="")
-    mime_type = models.CharField(max_length=100, blank=True, null=True, default="")
-    upload_time = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['-created_at'] 
 
     def __str__(self):
-        return self.filename
+        return f"Kết quả khớp cho '{self.job_description_filename}' lúc {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+class MatchResult(models.Model):
+    session = models.ForeignKey(MatchSession, related_name='results', on_delete=models.CASCADE)
+    resume_id = models.IntegerField(help_text="ID của CV từ AI server")
+    job_id = models.IntegerField(help_text="ID của JD từ AI server") 
+    resume_filename = models.CharField(max_length=255)
+    match_score = models.FloatField()
+    candidate_info = models.JSONField(null=True, blank=True)
+    candidate_skills = models.JSONField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.resume_filename} - {self.match_score}%"
