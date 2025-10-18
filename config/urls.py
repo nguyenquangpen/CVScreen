@@ -1,6 +1,8 @@
+from django.conf import settings as st
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.detailed_profile.view.api import AllMatchResultsView
 from apps.detailed_profile.view.web import detailed_profile_view
 from apps.overview.view.api import ProcessWithAI
 from apps.overview.view.web import jd_editor, match_results_view, overview
@@ -12,16 +14,25 @@ urlpatterns = [
     path("jd-editor/", jd_editor, name="jd_editor_new"),
     path("jd-editor/<int:jd_id>/", jd_editor, name="jd_editor_edit"),
     path("detailed-profile/", detailed_profile_view, name="detailed_profile"),
+    path(
+        "detailed-profile/<int:result_id>/",
+        detailed_profile_view,
+        name="detailed_profile_with_id",
+    ),
 ]
 
 urlpatterns += [
     path("api/process-with-ai/", ProcessWithAI.as_view(), name="process-with-ai"),
+    path(
+        "api/all-match-results/",
+        AllMatchResultsView.as_view(),
+        name="all-match-results",
+    ),
 ]
 
 urlpatterns += [
-    path("", include("config.api_router")),
+    path("api/", include("config.api_router")),
 ]
 
-urlpatterns += [
-    path("admin/", admin.site.urls),
-]
+if st.DJANGO_ADMIN:
+    urlpatterns += [path("admin/", admin.site.urls)]

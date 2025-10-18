@@ -9,6 +9,5 @@ router.register(r"resumes", ResumeViewSet, basename="resume")
 router.register(r"jobdescriptions", JobDescriptionViewSet, basename="jobdescription")
 router.register(r"resumes-new", ResumeView, basename="resume-new")
 
-urlpatterns = [
-    path("api/", include(router.urls)),
-]
+app_name = "api"
+urlpatterns = router.urls
