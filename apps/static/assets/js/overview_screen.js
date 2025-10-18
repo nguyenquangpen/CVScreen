@@ -52,9 +52,6 @@ $(function () {
     }
   };
 
-  // ================== DOM & CSRF ==================
-  const $msg = $('#messageContainer');
-
   function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -64,14 +61,51 @@ $(function () {
 
   // ================== Helpers chung ==================
   function showMsg(type, message) {
-    const html = `
-      <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>`;
-    $msg.append(html);
-    setTimeout(() => $msg.find('.alert').first().alert('close'), 3000);
+    const typeSettings = {
+      success: {
+        icon: 'success',
+        background: 'rgba(118, 185, 0, 0.5)',
+        color: '#ffffff'
+      },
+      danger: {
+        icon: 'error',
+        background: 'rgba(220, 53, 69, 0.9)',
+        color: '#ffffff'
+      },
+      warning: {
+        icon: 'warning',
+        background: 'rgba(255, 193, 7, 0.9)',
+        color: '#000000'
+      },
+      info: {
+        icon: 'info',
+        background: 'rgba(13, 202, 240, 0.9)',
+        color: '#ffffff'
+      }
+    };
+    const settings = typeSettings[type] || typeSettings.info;
+
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+
+      icon: settings.icon,
+      title: message,
+
+      background: settings.background,
+      color: settings.color,
+      iconColor: settings.color,
+
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+      }
+    });
   }
+
 
   function toLocalTime(ts) {
     const d = new Date(ts);
