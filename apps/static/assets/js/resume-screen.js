@@ -78,16 +78,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (event.target.classList.contains('btn-delete')) {
             const resultId = event.target.dataset.id;
-            if (confirm(`Are you sure you want to delete this result?`)) {
-                apiDeleteResult(resultId)
-                    .then(() => {
-                        clickedRow.remove();
-                    })
-                    .catch(error => {
-                        console.error('Failed to delete result:', error);
-                        alert(`Error: ${error.message}`);
-                    });
-            }
+            const resumeName = clickedRow.querySelector('td.fw-medium').textContent;
+
+            Swal.fire({
+                title: 'Xác nhận xóa',
+                text: `Bạn có chắc chắn muốn xóa "${resumeName}"? Hành động này không thể hoàn tác.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Có, xóa!',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    apiDeleteResult(resultId)
+                        .then(() => {
+                            Swal.fire(
+                                'Đã xóa!',
+                                `Hồ sơ "${resumeName}" đã được xóa thành công.`,
+                                'success'
+                            );
+                            fetchResults();
+                        })
+                        .catch(error => {
+                            console.error('Failed to delete result:', error);
+                            Swal.fire(
+                                'Lỗi!',
+                                `Không thể xóa "${resumeName}". Lỗi: ${error.message}`,
+                                'error'
+                            );
+                        });
+                }
+            });
         }
         else {
             const resultId = clickedRow.dataset.id;

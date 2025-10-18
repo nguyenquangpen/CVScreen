@@ -16,7 +16,6 @@ $(function () {
             </div>
           </td>
           <td class="fw-medium">${r.fileName}</td>
-          <td class="text-center">${r.phone ?? '—'}</td>
           <td class="text-center">${toLocalTime(r.uploadTs)}</td>
           <td><span class="badge ${r.status === 'uploaded' ? 'bg-success' : 'bg-warning'}">${r.status || 'pending'}</span></td>
           <td class="text-center d-flex justify-content-center small_button">
