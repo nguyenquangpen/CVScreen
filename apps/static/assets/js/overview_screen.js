@@ -64,7 +64,7 @@ $(function () {
     const typeSettings = {
       success: {
         icon: 'success',
-        background: 'rgba(118, 185, 0, 0.5)',
+        background: 'rgba(118, 185, 0, 0.9)',
         color: '#ffffff'
       },
       danger: {
@@ -392,9 +392,12 @@ function bind(kind) {
     });
     if (selectedJdIds.length === 1) {
       const jdId = selectedJdIds[0];
-      window.location.href = `/jd-editor/${jdId}/`;
+      // window.location.href = `/jd-editor/${jdId}/`;
+      console.log(`Redirecting to JD editor for JD ID: ${jdId}`);
+
     } else if (selectedJdIds.length === 0) {
-      window.location.href = `/jd-editor/`;
+      // window.location.href = `/jd-editor/`;
+      console.log('No JD selected, redirecting to general JD editor.');
     }
     else{
       showMsg('warning', 'please select only one Job Description to edit.');
