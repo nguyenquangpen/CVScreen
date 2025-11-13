@@ -392,11 +392,11 @@ function bind(kind) {
     });
     if (selectedJdIds.length === 1) {
       const jdId = selectedJdIds[0];
-      // window.location.href = `/jd-editor/${jdId}/`;
+      window.location.href = `/jd-editor/${jdId}/`;
       console.log(`Redirecting to JD editor for JD ID: ${jdId}`);
 
     } else if (selectedJdIds.length === 0) {
-      // window.location.href = `/jd-editor/`;
+      window.location.href = `/jd-editor/`;
       console.log('No JD selected, redirecting to general JD editor.');
     }
     else{

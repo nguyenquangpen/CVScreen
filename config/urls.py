@@ -4,8 +4,8 @@ from django.urls import include, path
 
 from apps.detailed_profile.view.api import AllMatchResultsView
 from apps.detailed_profile.view.web import detailed_profile_view
-from apps.overview.view.api import ProcessWithAI
-from apps.overview.view.web import jd_editor, match_results_view, overview
+from apps.overview.view.api import ProcessWithAI, GenerateJdWithAI
+from apps.overview.view.web import jd_editor, overview
 from apps.resume.view.web import resume_screen
 
 urlpatterns = [
@@ -23,6 +23,7 @@ urlpatterns = [
 
 urlpatterns += [
     path("api/process-with-ai/", ProcessWithAI.as_view(), name="process-with-ai"),
+    path("api/generate-jd-from-llm/", GenerateJdWithAI.as_view(), name="generate-jd-from-llm"),
     path(
         "api/all-match-results/",
         AllMatchResultsView.as_view(),

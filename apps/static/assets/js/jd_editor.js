@@ -1,15 +1,5 @@
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize TinyMCE
-    tinymce.init({
-      selector: '#jd-editor',
-      height: 520,
-      menubar: true,
-      plugins: 'lists link table code fullscreen',
-      toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link table | alignleft aligncenter alignright | fullscreen | code',
-      branding: false
-    });
-
     // Quick alert function
     function showAlert(type, msg) {
       const box = document.createElement('div');
@@ -28,9 +18,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const csrftoken = getCookie('csrftoken');
 
+    const btnGenJd = document.getElementById('btn-gen-jd');
+    let tinymceEditor;
+
+    function updateGenJdButtonState() {
+        if (tinymceEditor) {
+            const content = tinymceEditor.getContent({ format: 'text' }).trim();
+            btnGenJd.disabled = content.length === 0;
+        } else {
+            btnGenJd.disabled = true;
+        }
+    }
+    
+    // Initialize TinyMCE
+    tinymce.init({
+      selector: '#jd-editor',
+      height: 520,
+      menubar: true,
+      plugins: 'lists link table code fullscreen',
+      toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link table | alignleft aligncenter alignright | fullscreen | code',
+      branding: false,
+      setup: function(editor) {
+        tinymceEditor = editor; // Lưu trữ thể hiện editor
+        editor.on('init', updateGenJdButtonState); // Cập nhật trạng thái khi editor được khởi tạo
+        editor.on('change', updateGenJdButtonState); // Cập nhật trạng thái khi nội dung thay đổi
+        editor.on('keyup', updateGenJdButtonState); // Cập nhật trạng thái khi gõ phím
+      }
+    });
+
     // Save using AJAX (local session)
     document.getElementById('btn-save').addEventListener('click', async () => {
-      const content = tinymce.get('jd-editor').getContent();
+      const content = tinymceEditor.getContent();
       const jdId = document.getElementById('editing-jd-id').value; // Get the JD ID from the hidden input
 
       let endpoint;
@@ -87,4 +105,53 @@ document.addEventListener('DOMContentLoaded', () => {
         showAlert('danger', e.message || errorMessage);
       }
     });
+
+    // Generate JD using LLM
+    btnGenJd.addEventListener('click', async () => {
+        const currentContent = tinymceEditor.getContent();
+        if (!currentContent.trim()) {
+            showAlert('warning', 'please enter content to generate JD.');
+            return;
+        }
+
+        btnGenJd.disabled = true;
+        const originalButtonText = btnGenJd.textContent;
+        btnGenJd.textContent = 'Create...';
+
+        try {
+            const response = await fetch('/api/generate-jd-from-llm/', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ prompt_content: currentContent })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || errorData.error || `Failed to generate JD using AI (${response.status})`);
+            }
+
+            const data = await response.json();
+            const generatedJd = data.generated_jd;
+
+            if (generatedJd) {
+                tinymceEditor.setContent(generatedJd);
+                showAlert('success', 'JD generated successfully using AI.');
+            } else {
+                showAlert('warning', 'AI did not return any content.');
+            }
+
+        } catch (e) {
+            showAlert('danger', `Failed to generate JD using AI: ${e.message}`);
+            console.error('Failed to generate JD using AI:', e);
+        } finally {
+            btnGenJd.disabled = false;
+            btnGenJd.textContent = originalButtonText;
+            updateGenJdButtonState(); 
+        }
+    });
   });
+  

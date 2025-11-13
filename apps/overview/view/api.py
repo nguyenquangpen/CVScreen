@@ -196,3 +196,19 @@ class ProcessWithAI(APIView):
                 {"error": f"Lỗi hệ thống khi lưu dữ liệu: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+class GenerateJdWithAI(APIView):
+    def post(self, request, *args, **kwargs):
+        prompt_content = request.data.get('prompt_content')
+
+        if not prompt_content:
+            return Response(
+                {"error": "Can not find (prompt_content)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return _proxy_request_to_main_server(
+            endpoint="/api/generate-jd-from-llm/",
+            request_method="POST",
+            request_data={"prompt_content": prompt_content}
+        )
