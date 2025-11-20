@@ -14,13 +14,13 @@
     <div id="alert-container"></div>
 
     <input type="hidden" id="editing-jd-id" value="{{ jd_id|default:'' }}">
-    
+
     <!-- textarea cho TinyMCE -->
     <textarea id="jd-editor">{{ content|safe }}</textarea>
     <div class="d-flex justify-content-end align-items-center mt-3">
       <div>
         <a href="{% url 'overview' %}" class="btn btn-outline-secondary me-2">← Quay lại</a>
-        <button id="btn-gen-jd" class="btn me-2" disabled>Generate JD</button>
+        <button id="btn-gen-jd" class="btn me-2 btn-outline-success" disabled>Generate JD</button>
         <button id="btn-save" class="btn btn-primary">Save</button>
       </div>
     </div>
@@ -31,4 +31,3 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{ ASSETS_ROOT }}/js/jd_editor.js"></script>
 {% endblock %}
-

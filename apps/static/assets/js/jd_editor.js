@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     // Quick alert function
     function showAlert(type, msg) {
@@ -29,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnGenJd.disabled = true;
         }
     }
-    
+
     // Initialize TinyMCE
     tinymce.init({
       selector: '#jd-editor',
@@ -39,30 +38,29 @@ document.addEventListener('DOMContentLoaded', () => {
       toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link table | alignleft aligncenter alignright | fullscreen | code',
       branding: false,
       setup: function(editor) {
-        tinymceEditor = editor; // Lưu trữ thể hiện editor
-        editor.on('init', updateGenJdButtonState); // Cập nhật trạng thái khi editor được khởi tạo
-        editor.on('change', updateGenJdButtonState); // Cập nhật trạng thái khi nội dung thay đổi
-        editor.on('keyup', updateGenJdButtonState); // Cập nhật trạng thái khi gõ phím
+        tinymceEditor = editor;
+        editor.on('init', updateGenJdButtonState);
+        editor.on('change', updateGenJdButtonState);
+        editor.on('keyup', updateGenJdButtonState);
       }
     });
 
-    // Save using AJAX (local session)
     document.getElementById('btn-save').addEventListener('click', async () => {
       const content = tinymceEditor.getContent();
-      const jdId = document.getElementById('editing-jd-id').value; // Get the JD ID from the hidden input
+      const jdId = document.getElementById('editing-jd-id').value;
 
       let endpoint;
       let method;
       let successMessage;
       let errorMessage;
 
-      if (jdId) { 
+      if (jdId) {
         endpoint = `/api/jobdescriptions/${jdId}/`;
         method = 'PATCH';
         successMessage = 'Job description updated successfully.';
         errorMessage = 'An error occurred while updating the job description.';
-      } else { 
-        endpoint = `/api/jobdescriptions/`; 
+      } else {
+        endpoint = `/api/jobdescriptions/`;
         method = 'POST';
         successMessage = 'New job description created successfully.';
         errorMessage = 'An error occurred while creating the new job description.';
@@ -102,7 +100,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
       } catch (e) {
-        showAlert('danger', e.message || errorMessage);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: e.message || errorMessage,
+            confirmButtonText: 'OK'
+        });
       }
     });
 
@@ -110,13 +113,20 @@ document.addEventListener('DOMContentLoaded', () => {
     btnGenJd.addEventListener('click', async () => {
         const currentContent = tinymceEditor.getContent();
         if (!currentContent.trim()) {
-            showAlert('warning', 'please enter content to generate JD.');
+            showAlert('warning', 'Please enter content to generate JD.');
             return;
         }
 
         btnGenJd.disabled = true;
-        const originalButtonText = btnGenJd.textContent;
-        btnGenJd.textContent = 'Create...';
+
+        Swal.fire({
+            title: 'Generating Job Description...',
+            html: 'Please wait while AI processes your request.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
 
         try {
             const response = await fetch('/api/generate-jd-from-llm/', {
@@ -136,22 +146,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = await response.json();
             const generatedJd = data.generated_jd;
-
             if (generatedJd) {
                 tinymceEditor.setContent(generatedJd);
-                showAlert('success', 'JD generated successfully using AI.');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'JD generated successfully using AI.',
+                    confirmButtonText: 'OK'
+                });
             } else {
-                showAlert('warning', 'AI did not return any content.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Content',
+                    text: 'AI did not return any content.',
+                    confirmButtonText: 'OK'
+                });
             }
+            // Kết thúc phần mới
 
         } catch (e) {
-            showAlert('danger', `Failed to generate JD using AI: ${e.message}`);
             console.error('Failed to generate JD using AI:', e);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: `Failed to generate JD using AI: ${e.message}`,
+                confirmButtonText: 'OK'
+            });
         } finally {
-            btnGenJd.disabled = false;
-            btnGenJd.textContent = originalButtonText;
-            updateGenJdButtonState(); 
+            Swal.close();
+            updateGenJdButtonState();
         }
     });
   });
-  
