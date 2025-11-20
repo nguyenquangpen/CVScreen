@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
 
 def overview(request):
@@ -12,13 +12,15 @@ def overview(request):
     )
 
 
-def jd_editor(request):
-    content = request.session.get("jd_content", "")
+def jd_editor(request, jd_id=None):
+    editor_content = {"jd_id": jd_id}
+
     return render(
         request,
         "pages/jd_editor.html",
         {
-            "content": content,
+            "content": editor_content,
+            "jd_id": jd_id,
             "TINYMCE_KEY": settings.TINYMCE_KEY,
         },
     )

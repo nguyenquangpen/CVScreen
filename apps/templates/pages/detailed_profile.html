@@ -1,19 +1,41 @@
 {% extends 'layouts/base.html' %}
 {% load static %}
+
 {% block title %}
   resume
 {% endblock %}
 
 {% block stylesheets %}
-
+  <link rel="stylesheet" href="{{ ASSETS_ROOT }}/css/detailed_profile.css">
 {% endblock %}
 
 {% block content %}
-    <div class="rounded-5 bg-white p-4 shadow-sm">
-        
+<div id="page-content" class="rounded-5 bg-white p-4 shadow-sm">
+    <div id="loading-spinner" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading candidates...</p>
     </div>
+
+    <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+
+    <div id="results-container" class="row g-4">
+    </div>
+</div>
+
+
+<div id="skill-modal" class="modal-overlay">
+    <div class="modal-panel">
+        <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+        <h4 class="mb-3" id="modal-candidate-name">Candidate Skills</h4>
+        <hr>
+        <div id="modal-skills-content" class="mt-4">
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
-
+  <script src="{{ ASSETS_ROOT }}/js/detailed_profile.js"></script>
 {% endblock %}

@@ -4,10 +4,10 @@ $(function () {
     resumes: {
       btn: '#btn-upload-resume',
       tbody: '#resumeTableBody',
-      accept: '.pdf,.doc,.docx,.txt',
+      accept: '.pdf,.doc,.docx,.txt, .csv',
       empty: '<tr><td colspan="6" class="text-center">Chưa có CV nào.</td></tr>',
       store: [],
-      endpoint: '/api/resumes/',
+      endpoint: '/api/resumes',
       rowHtml: (r, toLocalTime) => `
         <tr class="normal_text" data-kind="resumes" data-id="${r.id}">
           <td class="text-center">
@@ -16,7 +16,6 @@ $(function () {
             </div>
           </td>
           <td class="fw-medium">${r.fileName}</td>
-          <td class="text-center">${r.phone ?? '—'}</td>
           <td class="text-center">${toLocalTime(r.uploadTs)}</td>
           <td><span class="badge ${r.status === 'uploaded' ? 'bg-success' : 'bg-warning'}">${r.status || 'pending'}</span></td>
           <td class="text-center d-flex justify-content-center small_button">
@@ -29,10 +28,10 @@ $(function () {
     jobdescriptions: {
       btn: '#btn-upload-job',
       tbody: '#jdTableBody',
-      accept: '.pdf,.doc,.docx,.txt',
+      accept: '.pdf,.doc,.docx,.txt, .csv',
       empty: '<tr><td colspan="5" class="text-center">Chưa có JD nào.</td></tr>',
       store: [],
-      endpoint: '/api/jobdescriptions/',
+      endpoint: '/api/jobdescriptions',
       rowHtml: (r, toLocalTime) => `
         <tr class="normal_text" data-kind="jobdescriptions" data-id="${r.id}">
           <td class="text-center">
@@ -53,9 +52,6 @@ $(function () {
     }
   };
 
-  // ================== DOM & CSRF ==================
-  const $msg = $('#messageContainer');
-
   function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -65,25 +61,63 @@ $(function () {
 
   // ================== Helpers chung ==================
   function showMsg(type, message) {
-    const html = `
-      <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>`;
-    $msg.append(html);
-    setTimeout(() => $msg.find('.alert').first().alert('close'), 3000);
+    const typeSettings = {
+      success: {
+        icon: 'success',
+        background: 'rgba(118, 185, 0, 0.9)',
+        color: '#ffffff'
+      },
+      danger: {
+        icon: 'error',
+        background: 'rgba(220, 53, 69, 0.9)',
+        color: '#ffffff'
+      },
+      warning: {
+        icon: 'warning',
+        background: 'rgba(255, 193, 7, 0.9)',
+        color: '#000000'
+      },
+      info: {
+        icon: 'info',
+        background: 'rgba(13, 202, 240, 0.9)',
+        color: '#ffffff'
+      }
+    };
+    const settings = typeSettings[type] || typeSettings.info;
+
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+
+      icon: settings.icon,
+      title: message,
+
+      background: settings.background,
+      color: settings.color,
+      iconColor: settings.color,
+
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+      }
+    });
   }
+
 
   function toLocalTime(ts) {
     const d = new Date(ts);
     return isNaN(d) ? new Date().toLocaleString() : d.toLocaleString();
   }
 
-  // ================== API chung (Tool Server) ==================
+  // ================== API (Tool Server) ==================
   function apiUpload(kind, file) {
     const fd = new FormData();
     fd.append('file', file);
-    return fetch(`${KINDS[kind].endpoint}upload/`, {
+
+    return fetch(`${KINDS[kind].endpoint}/upload/`, {
       method: 'POST',
       body: fd,
       headers: {
@@ -98,7 +132,7 @@ $(function () {
   }
 
   function apiDelete(kind, id) {
-    return fetch(`${KINDS[kind].endpoint}${id}/delete/`, {
+    return fetch(`${KINDS[kind].endpoint}/${id}/delete/`, {
       method: 'DELETE',
       headers: {
         'X-CSRFToken': csrftoken
@@ -106,6 +140,7 @@ $(function () {
       credentials: 'same-origin'
     }).then(r => {
       if (!r.ok) throw new Error(`Delete failed (${r.status})`);
+      else window.location.reload();
     });
   }
 
@@ -119,10 +154,11 @@ $(function () {
     });
   }
 
+  /// send id to data
   function sendDataToAI(resumeIds, jdId) {
     const payload = {
       resume_ids: resumeIds,
-      job_ids: jdId
+      job_description_id: jdId
     };
     const DJANGO_AI_PROCESS_ENDPOINT = '/api/process-with-ai/';
 
@@ -145,7 +181,7 @@ $(function () {
 
   function normalize(kind, data) {
     const base = {
-      id: data.id.toString(),
+      id: (data.id != null) ? data.id.toString() : '',
       fileName: data.filename,
       uploadTs: Date.parse(data.upload_time) || Date.now(),
       status: data.status || 'pending'
@@ -219,7 +255,7 @@ function bind(kind) {
   $(cfg.tbody).on('click', '.btn-delete', function () {
     const $row = $(this).closest('tr');
     const id = $row.data('id');
-    const itemFileName = $row.find('td.fw-medium').text(); 
+    const itemFileName = $row.find('td.fw-medium').text();
     Swal.fire({
       title: 'Xác nhận xóa',
       text: `Bạn có chắc chắn muốn xóa "${itemFileName}"? Hành động này không thể hoàn tác.`,
@@ -236,15 +272,15 @@ function bind(kind) {
             const i = cfg.store.findIndex(r => r.id === id);
             if (i >= 0) cfg.store.splice(i, 1);
             render(kind);
-            Swal.fire( 
+            Swal.fire(
               'Đã xóa!',
               `Mục "${itemFileName}" đã được xóa thành công.`,
               'success'
             );
           })
           .catch(err => {
-            showMsg('danger', `Delete error: ${err.message}`); 
-            Swal.fire( 
+            showMsg('danger', `Delete error: ${err.message}`);
+            Swal.fire(
               'Lỗi!',
               `Không thể xóa "${itemFileName}". Lỗi: ${err.message}`,
               'error'
@@ -255,10 +291,18 @@ function bind(kind) {
   });
 
   $(cfg.tbody).on('change', '.row-checkbox', function () {
-    updateSelectAllCheckbox(kind);
+    const $thisCheckbox = $(this);
+    const isChecked = $thisCheckbox.prop('checked');
+
+    if (kind === 'jobdescriptions') {
+      if (isChecked) {
+        $(`${cfg.tbody} .row-checkbox`).not($thisCheckbox).prop('checked', false);
+      }
+    } else {
+      updateSelectAllCheckbox(kind);
+    }
   });
 }
-
 
   // ================== Logic Checkbox "Select All" ==================
   function setupSelectAllCheckbox(tableBodyId) {
@@ -298,7 +342,7 @@ function bind(kind) {
     $('#resumeTableBody .row-checkbox:checked').each(function () {
       const rowId = $(this).closest('tr').data('id');
       if (rowId) {
-        selectedResumeIds.push(rowId.toString());
+        selectedResumeIds.push(parseInt(rowId, 10));
       }
     });
 
@@ -306,7 +350,7 @@ function bind(kind) {
     $('#jdTableBody .row-checkbox:checked').each(function () {
       const rowId = $(this).closest('tr').data('id');
       if (rowId) {
-        selectedJdIds.push(rowId.toString());
+        selectedJdIds.push(parseInt(rowId, 10));
       }
     });
 
@@ -316,11 +360,17 @@ function bind(kind) {
       return;
     }
 
-    sendDataToAI(selectedResumeIds, selectedJdIds)
+    const singleJdId = selectedJdIds[0];
+
+    sendDataToAI(selectedResumeIds, singleJdId)
       .then(response => {
-        showMsg('success', 'Yêu cầu xử lý AI đã được gửi thành công! Kết quả sẽ được hiển thị.');
         console.log('Django Backend Response (from AI Server):', response);
-        alert('AI processing request sent successfully! Check console for response.');
+
+        if (response && response.redirect_url) {
+          setTimeout(() => {
+            window.location.href = response.redirect_url
+          }, 1500);
+        }
       })
       .catch(error => {
         showMsg('danger', `Gửi yêu cầu xử lý AI thất bại: ${error.message}`);
@@ -330,6 +380,29 @@ function bind(kind) {
             $startButton.prop('disabled', false);
       });
   });
+
+  // ================== Xử lý sự kiện nút "Edit Job Description" ==================
+  $('#btn-edit-jd').on('click', function () {
+    const selectedJdIds = [];
+    $('#jdTableBody .row-checkbox:checked').each(function () {
+      const rowId = $(this).closest('tr').data('id');
+      if (rowId) {
+        selectedJdIds.push(rowId.toString());
+      }
+    });
+    if (selectedJdIds.length === 1) {
+      const jdId = selectedJdIds[0];
+      window.location.href = `/jd-editor/${jdId}/`;
+      console.log(`Redirecting to JD editor for JD ID: ${jdId}`);
+
+    } else if (selectedJdIds.length === 0) {
+      window.location.href = `/jd-editor/`;
+      console.log('No JD selected, redirecting to general JD editor.');
+    }
+    else{
+      showMsg('warning', 'please select only one Job Description to edit.');
+    }
+   });
 
   // ================== Khởi tạo ==================
   async function initializeData() {
@@ -357,7 +430,6 @@ function bind(kind) {
   // --- Chạy các hàm thiết lập ban đầu ---
   bind('resumes');
   bind('jobdescriptions');
-  setupSelectAllCheckbox('#jdTableBody');
   setupSelectAllCheckbox('#resumeTableBody');
   initializeData();
 });
