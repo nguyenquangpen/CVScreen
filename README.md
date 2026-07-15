@@ -94,10 +94,33 @@ Developed a multi-agent AI orchestration system for automated script-to-video pr
 
 `Python` · `LangGraph` · `Multi-Agent Systems` · `SQLite` · `Gemini/Veo APIs` · `Generative AI`
 
-**GitHub**
+**GitLab**
+https://gitlab.com/agentic5835714/vidagentic.git
 
-https://github.com/nguyenquangpen/CVScreen
+## AI Research Engineer (Multimodal Video Summarization)
 
+**Duration:** Jul 2025 – Apr 2026
+
+**Role:** Research Member
+
+**Research Objective**
+
+Proposed a multimodal video summarization framework leveraging Vision-Language Models (VLMs) and Large Language Models (LLMs) to improve semantic understanding beyond conventional visual-temporal feature extraction approaches.
+
+**Research Contributions**
+
+- Proposed a Local-to-Global architecture that combines semantic caption generation with hierarchical temporal reasoning.
+- Investigated semantic feature extraction using Florence-2 to bridge visual representations and natural language.
+- Designed an LLM-based temporal reasoning strategy with in-context learning and sliding-window prompting for local importance estimation.
+- Developed a global aggregation module to rank semantic segments and generate coherent video highlights.
+- Conducted experimental evaluations on soccer video datasets, demonstrating improved semantic event detection compared with traditional shot-based methods.
+
+**Tech Stack**
+
+`Python` · `PyTorch` · `FastAPI` · `WebSocket` · `Florence-2` · `Llama-2 / Llama-3` · `PySceneDetect`
+
+**GiHub**
+https://github.com/nguyenquangpen/NCKH_tools.git
 ---
 
 # SKILLS
