@@ -1,23 +1,153 @@
+<h1 align="center">NGUYEN TRAN QUANG</h1>
 
-## 🔧 Setup Instructions
+<h2 align="center">AI ENGINEER</h2>
 
-1. **Clone the repository**  
-   ```bash
-   git clone "....."
-   cd apps
-   ```
+<p align="center">
+📞 0827068900 &nbsp;&nbsp;|&nbsp;&nbsp;
+📧 nguyenquangpen@gmail.com &nbsp;&nbsp;|&nbsp;&nbsp;
+🔗 <a href="https://github.com/nguyenquangpen">GitHub</a> &nbsp;&nbsp;|&nbsp;&nbsp;
+📍 Hanoi, Vietnam
+</p>
 
-2. **Install dependencies**  
-   ```bash
-   pip install -r requirements.txt
-   ```
+# TARGET
 
-3. **Apply migrations**  
-   ```bash
-   python manage.py migrate
-   ```
+Dedicated AI Engineer seeking to apply expertise in developing intelligent systems to deliver efficient and scalable solutions. Passionate about leveraging AI technologies to solve real-world business challenges and create meaningful impact.
 
-4. **Run development server**  
-   ```bash
-   python manage.py runserver
-   ```
+---
+
+# EDUCATION
+
+## PHENIKAA UNIVERSITY
+
+**Bachelor of Science in Computer Science**
+
+- GPA: **3.2 / 4.0**
+- Member of the AI-IoT Research Lab, applying AI to solve real-world problems *(2025–2026)*
+- Received a university scholarship for outstanding academic performance through direct admission *(2022–2023)*
+
+---
+
+# EXPERIENCE
+
+## CO-WELL ASIA
+
+### AI Engineer Intern | Jul 2025 – Jan 2026
+
+**Project:** Test Agent Tool (R&D Team)
+
+**Objective**
+
+Develop AI solutions to automate testing of complex business logic for QA teams, reducing manual errors while accelerating the QA process and lowering operational costs.
+
+**Key Contributions**
+
+- Applied Prompt Caching, Summary Buffer, and Model Routing techniques, reducing token usage by approximately one-third while improving system efficiency.
+- Designed a checkpoint mechanism to minimize token duplication and computational costs.
+- Contributed to UI development and application logic.
+- Proposed and implemented the transition from a cloud-based architecture to a local-first architecture, improving overall application responsiveness.
+
+**Tech Stack**
+
+`Python` · `LangChain` · `OpenAI` · `Gemini` · `PyQt6` · `Playwright` · `Docker`
+
+---
+
+### AI Engineer Part-time | Jan 2026 – Apr 2026
+
+**Objective**
+
+Developed an AI-powered backend for automated web testcase generation and execution.
+
+**Key Contributions**
+
+- Built AI browser agent orchestration with FastAPI and WebSockets for automated test execution.
+- Developed an asynchronous LLM testcase generation pipeline using Celery, Redis, and LangChain.
+- Implemented agent state checkpointing and client-server synchronization with MongoDB.
+- Containerized the system using Docker Compose for deployment.
+
+**Tech Stack**
+
+`Python` · `FastAPI` · `WebSocket` · `LangChain` · `OpenAI` · `Celery` · `Redis` · `MongoDB` · `Docker`
+
+---
+
+# PROJECTS
+
+## VidAgentic (AI Orchestrator / Multi-Agent System Developer)
+
+**Duration:** Oct 2025 – Nov 2025
+
+**Role:** Team Leader (3 Members)
+
+**Objective**
+
+Developed a multi-agent AI orchestration system for automated script-to-video production.
+
+**Key Contributions**
+
+- Designed a LangGraph-based multi-agent workflow for script analysis, planning, and production orchestration.
+- Built a production state management system with SQLite to support review, retry, and timeline synchronization.
+- Implemented visual continuity logic by reusing previous video frames across related scenes.
+- Integrated multimodal Generative AI services for image, audio, and video generation.
+
+**Tech Stack**
+
+`Python` · `LangGraph` · `Multi-Agent Systems` · `SQLite` · `Gemini/Veo APIs` · `Generative AI`
+
+**GitHub**
+
+https://github.com/nguyenquangpen/CVScreen
+
+---
+
+# SKILLS
+
+| Programming | AI & Frameworks | Backend & Database | Tools & Platforms |
+|-------------|-----------------|--------------------|-------------------|
+| Python | LangChain | FastAPI | Git |
+| | LangGraph | WebSocket | Docker |
+| | Agentic Workflow | RESTful API | Playwright |
+| | RAG | MongoDB | Redis |
+| | Prompt Engineering | PostgreSQL | Celery |
+| | OpenAI API | MySQL | Linux |
+| | Gemini API | SQLite | OpenCV |
+
+**Languages**
+
+- English (Technical Reading & Documentation)
+
+**Languages**
+
+- English (Technical Reading & Documentation)
+
+---
+
+# AWARDS
+
+## School-level AI Hackathon
+
+**Sep 2025 – Oct 2025**
+
+- Winning Prize
+
+### Scientific Research Competition
+
+**Jul 2025 – Apr 2026**
+
+- AI / Computer Vision research project advanced to the university-level competition.
+
+---
+
+# CERTIFICATIONS
+
+## Python for Data Science, AI & Development
+
+**Feb 2025**
+
+https://coursera.org/share/625a8b2b788362d9aef98e4bebf6db6a
+
+### Databases and SQL for Data Science with Python
+
+**Mar 2025**
+
+https://coursera.org/share/8099f95d4974f2f48bcc700bdfa895d6
