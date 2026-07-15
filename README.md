@@ -37,7 +37,7 @@ Dedicated AI Engineer seeking to apply expertise in developing intelligent syste
 
 **Objective**
 
-Develop AI solutions to automate testing of complex business logic for QA teams, reducing manual errors while accelerating the QA process and lowering operational costs.
+Develop AI solutions to automate the testing of complex business logic for QA teams, reducing manual errors while accelerating the QA process and lowering operational costs.
 
 **Key Contributions**
 
@@ -52,7 +52,7 @@ Develop AI solutions to automate testing of complex business logic for QA teams,
 
 ---
 
-### AI Engineer Part-time | Jan 2026 – Apr 2026
+### AI Engineer (Part-time) | Jan 2026 – Apr 2026
 
 **Objective**
 
@@ -60,8 +60,8 @@ Developed an AI-powered backend for automated web testcase generation and execut
 
 **Key Contributions**
 
-- Built AI browser agent orchestration with FastAPI and WebSockets for automated test execution.
-- Developed an asynchronous LLM testcase generation pipeline using Celery, Redis, and LangChain.
+- Built an AI browser agent orchestration system using FastAPI and WebSockets for automated test execution.
+- Developed an asynchronous LLM-based testcase generation pipeline using Celery, Redis, and LangChain.
 - Implemented agent state checkpointing and client-server synchronization with MongoDB.
 - Containerized the system using Docker Compose for deployment.
 
@@ -95,7 +95,10 @@ Developed a multi-agent AI orchestration system for automated script-to-video pr
 `Python` · `LangGraph` · `Multi-Agent Systems` · `SQLite` · `Gemini/Veo APIs` · `Generative AI`
 
 **GitLab**
+
 https://gitlab.com/agentic5835714/vidagentic.git
+
+---
 
 ## AI Research Engineer (Multimodal Video Summarization)
 
@@ -119,8 +122,10 @@ Proposed a multimodal video summarization framework leveraging Vision-Language M
 
 `Python` · `PyTorch` · `FastAPI` · `WebSocket` · `Florence-2` · `Llama-2 / Llama-3` · `PySceneDetect`
 
-**GiHub**
+**GitHub**
+
 https://github.com/nguyenquangpen/NCKH_tools.git
+
 ---
 
 # SKILLS
@@ -134,10 +139,6 @@ https://github.com/nguyenquangpen/NCKH_tools.git
 | | Prompt Engineering | PostgreSQL | Celery |
 | | OpenAI API | MySQL | Linux |
 | | Gemini API | SQLite | OpenCV |
-
-**Languages**
-
-- English (Technical Reading & Documentation)
 
 **Languages**
 
@@ -158,19 +159,3 @@ https://github.com/nguyenquangpen/NCKH_tools.git
 **Jul 2025 – Apr 2026**
 
 - AI / Computer Vision research project advanced to the university-level competition.
-
----
-
-# CERTIFICATIONS
-
-## Python for Data Science, AI & Development
-
-**Feb 2025**
-
-https://coursera.org/share/625a8b2b788362d9aef98e4bebf6db6a
-
-### Databases and SQL for Data Science with Python
-
-**Mar 2025**
-
-https://coursera.org/share/8099f95d4974f2f48bcc700bdfa895d6
