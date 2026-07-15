@@ -1,23 +1,23 @@
-<h1 align="center">NGUYEN TRAN QUANG</h1>
+<div align="center">
 
-<h2 align="center">AI ENGINEER</h2>
+# NGUYEN TRAN QUANG
 
-<p align="center">
+**AI ENGINEER**
+
 📞 0827068900 &nbsp;&nbsp;|&nbsp;&nbsp;
 📧 nguyenquangpen@gmail.com &nbsp;&nbsp;|&nbsp;&nbsp;
-🔗 <a href="https://github.com/nguyenquangpen">GitHub</a> &nbsp;&nbsp;|&nbsp;&nbsp;
+🔗 https://github.com/nguyenquangpen &nbsp;&nbsp;|&nbsp;&nbsp;
 📍 Hanoi, Vietnam
-</p>
+
+</div>
 
 # TARGET
 
 Dedicated AI Engineer seeking to apply expertise in developing intelligent systems to deliver efficient and scalable solutions. Passionate about leveraging AI technologies to solve real-world business challenges and create meaningful impact.
 
----
-
 # EDUCATION
 
-## PHENIKAA UNIVERSITY
+**PHENIKAA UNIVERSITY**
 
 **Bachelor of Science in Computer Science**
 
@@ -25,13 +25,11 @@ Dedicated AI Engineer seeking to apply expertise in developing intelligent syste
 - Member of the AI-IoT Research Lab, applying AI to solve real-world problems *(2025–2026)*
 - Received a university scholarship for outstanding academic performance through direct admission *(2022–2023)*
 
----
-
 # EXPERIENCE
 
-## CO-WELL ASIA
+**CO-WELL ASIA**
 
-### AI Engineer Intern | Jul 2025 – Jan 2026
+**AI Engineer Intern** | **Jul 2025 – Jan 2026**
 
 **Project:** Test Agent Tool (R&D Team)
 
@@ -50,9 +48,9 @@ Develop AI solutions to automate the testing of complex business logic for QA te
 
 `Python` · `LangChain` · `OpenAI` · `Gemini` · `PyQt6` · `Playwright` · `Docker`
 
----
+<br>
 
-### AI Engineer (Part-time) | Jan 2026 – Apr 2026
+**AI Engineer (Part-time)** | **Jan 2026 – Apr 2026**
 
 **Objective**
 
@@ -69,11 +67,9 @@ Developed an AI-powered backend for automated web testcase generation and execut
 
 `Python` · `FastAPI` · `WebSocket` · `LangChain` · `OpenAI` · `Celery` · `Redis` · `MongoDB` · `Docker`
 
----
-
 # PROJECTS
 
-## VidAgentic (AI Orchestrator / Multi-Agent System Developer)
+**VidAgentic (AI Orchestrator / Multi-Agent System Developer)**
 
 **Duration:** Oct 2025 – Nov 2025
 
@@ -98,9 +94,9 @@ Developed a multi-agent AI orchestration system for automated script-to-video pr
 
 https://gitlab.com/agentic5835714/vidagentic.git
 
----
+<br>
 
-## AI Research Engineer (Multimodal Video Summarization)
+**AI Research Engineer (Multimodal Video Summarization)**
 
 **Duration:** Jul 2025 – Apr 2026
 
@@ -126,12 +122,10 @@ Proposed a multimodal video summarization framework leveraging Vision-Language M
 
 https://github.com/nguyenquangpen/NCKH_tools.git
 
----
-
 # SKILLS
 
 | Programming | AI & Frameworks | Backend & Database | Tools & Platforms |
-|-------------|-----------------|--------------------|-------------------|
+|--------------|-----------------|--------------------|-------------------|
 | Python | LangChain | FastAPI | Git |
 | | LangGraph | WebSocket | Docker |
 | | Agentic Workflow | RESTful API | Playwright |
@@ -144,17 +138,17 @@ https://github.com/nguyenquangpen/NCKH_tools.git
 
 - English (Technical Reading & Documentation)
 
----
-
 # AWARDS
 
-## School-level AI Hackathon
+**School-level AI Hackathon**
 
 **Sep 2025 – Oct 2025**
 
 - Winning Prize
 
-### Scientific Research Competition
+<br>
+
+**Scientific Research Competition**
 
 **Jul 2025 – Apr 2026**
 
